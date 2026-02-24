@@ -216,25 +216,25 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    padding: 3rem 2rem;
+    padding: 2rem 1.5rem;
     color: #1a1a1a;
 }
 .container {
-    max-width: 1400px;
+    max-width: 1800px;
     margin: 0 auto;
 }
 h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: white;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     text-align: center;
     text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
 }
 .card {
     background: white;
@@ -269,10 +269,10 @@ h1 {
 }
 .rank-badge {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 36px;
-    height: 36px;
+    top: 10px;
+    left: 10px;
+    width: 32px;
+    height: 32px;
     background: rgba(0,0,0,0.75);
     color: white;
     border-radius: 50%;
@@ -280,34 +280,34 @@ h1 {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     backdrop-filter: blur(8px);
     z-index: 1;
 }
 .info {
-    padding: 1.25rem;
+    padding: 1rem;
 }
 .title {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.3rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .artist {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: #666;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .album {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: #999;
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -316,19 +316,19 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 0.75rem;
+    padding-top: 0.625rem;
     border-top: 1px solid #eee;
 }
 .plays {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #667eea;
 }
 .delta {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    padding: 0.25rem 0.625rem;
-    border-radius: 12px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
 }
 .delta.positive {
     background: #d4edda;
