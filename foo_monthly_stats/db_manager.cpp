@@ -266,6 +266,51 @@ namespace fms
         return result;
     }
 
+    std::vector<MonthlyEntry> DbManager::queryYear(const std::string &year)
+    {
+        std::vector<MonthlyEntry> result;
+        if (!m_db)
+            return result;
+
+        sqlite3_stmt *stmt = nullptr;
+        const char *sql =
+            "SELECT c.track_crc, c.path, c.title, c.artist, c.album,"
+            "       SUM(c.playcount * c.length_seconds) / SUM(c.playcount) AS avg_length,"
+            "       SUM(c.playcount) AS total_plays,"
+            "       COALESCE(SUM(p.playcount), 0) AS prev_total"
+            " FROM monthly_count c"
+            " LEFT JOIN monthly_count p"
+            "   ON p.track_crc = c.track_crc AND p.ym LIKE ?"
+            " WHERE c.ym LIKE ?"
+            " GROUP BY c.track_crc, c.path, c.title, c.artist, c.album"
+            " ORDER BY total_plays DESC";
+
+        std::string prevYearPattern = std::to_string(std::stoi(year) - 1) + "-%";
+        std::string yearPattern = year + "-%";
+
+        if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(stmt, 1, prevYearPattern.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, 2, yearPattern.c_str(), -1, SQLITE_TRANSIENT);
+            while (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                MonthlyEntry e;
+                e.ym = year;
+                e.track_crc = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+                e.path = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+                e.title = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+                e.artist = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+                e.album = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4));
+                e.length_seconds = sqlite3_column_double(stmt, 5);
+                e.playcount = sqlite3_column_int64(stmt, 6);
+                e.prev_playcount = sqlite3_column_int64(stmt, 7);
+                result.push_back(std::move(e));
+            }
+            sqlite3_finalize(stmt);
+        }
+        return result;
+    }
+
     std::string DbManager::currentYM()
     {
         auto now = std::chrono::system_clock::now();
@@ -278,6 +323,21 @@ namespace fms
 #endif
         char buf[8];
         strftime(buf, sizeof(buf), "%Y-%m", &local_tm);
+        return buf;
+    }
+
+    std::string DbManager::currentYear()
+    {
+        auto now = std::chrono::system_clock::now();
+        time_t t = std::chrono::system_clock::to_time_t(now);
+        struct tm local_tm;
+#ifdef _WIN32
+        localtime_s(&local_tm, &t);
+#else
+        localtime_r(&t, &local_tm);
+#endif
+        char buf[5];
+        strftime(buf, sizeof(buf), "%Y", &local_tm);
         return buf;
     }
 

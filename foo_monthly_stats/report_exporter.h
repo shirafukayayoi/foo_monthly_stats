@@ -22,7 +22,7 @@ namespace fms
         // artMap: optional map of track_crc -> base64 JPEG data URI for album art thumbnails.
         // Returns an empty string on success, or an error message on failure.
         static std::string exportHtml(
-            const std::string &ym,
+            const std::string &periodLabel,
             const std::vector<MonthlyEntry> &entries,
             const std::wstring &htmlPath,
             const std::map<std::string, std::string> &artMap = {});

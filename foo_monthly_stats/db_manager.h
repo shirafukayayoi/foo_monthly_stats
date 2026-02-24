@@ -57,8 +57,14 @@ namespace fms
         // Query monthly data synchronously (called on main thread for UI)
         std::vector<MonthlyEntry> queryMonth(const std::string &ym);
 
+        // Query yearly data synchronously (aggregates all months in a year)
+        std::vector<MonthlyEntry> queryYear(const std::string &year);
+
         // Compute current "YYYY-MM" string
         static std::string currentYM();
+
+        // Compute current "YYYY" string
+        static std::string currentYear();
 
         // Singleton access
         static DbManager &get();

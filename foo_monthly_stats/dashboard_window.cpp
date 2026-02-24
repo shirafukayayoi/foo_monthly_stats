@@ -37,9 +37,10 @@ namespace fms
     // ---------------------------------------------------------------------------
     BOOL DashboardWindow::OnInitDialog(CWindow, LPARAM)
     {
-        m_ym = DbManager::currentYM();
+        m_viewMode = MONTH;
+        m_period = DbManager::currentYM();
         SetupListColumns();
-        UpdateMonthLabel();
+        UpdatePeriodLabel();
         Populate();
         return TRUE;
     }
@@ -83,35 +84,71 @@ namespace fms
             ::SetWindowPos(hStatus, nullptr, 145, y + 2, rcDlg.right - 150, 14, SWP_NOZORDER);
     }
 
+    void DashboardWindow::OnModeToggle(UINT, int, CWindow)
+    {
+        if (m_viewMode == MONTH)
+        {
+            // Switch to Year mode
+            m_viewMode = YEAR;
+            m_period = m_period.substr(0, 4); // "2026-02" -> "2026"
+        }
+        else
+        {
+            // Switch to Month mode
+            m_viewMode = MONTH;
+            m_period = m_period + "-" + DbManager::currentYM().substr(5, 2); // "2026" -> "2026-02"
+        }
+        UpdatePeriodLabel();
+        Populate();
+    }
+
     void DashboardWindow::OnPrev(UINT, int, CWindow)
     {
-        int year = std::stoi(m_ym.substr(0, 4));
-        int month = std::stoi(m_ym.substr(5, 2));
-        if (--month == 0)
+        if (m_viewMode == MONTH)
         {
-            month = 12;
-            --year;
+            int year = std::stoi(m_period.substr(0, 4));
+            int month = std::stoi(m_period.substr(5, 2));
+            if (--month == 0)
+            {
+                month = 12;
+                --year;
+            }
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
+            m_period = buf;
         }
-        char buf[8];
-        snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
-        m_ym = buf;
-        UpdateMonthLabel();
+        else // YEAR
+        {
+            int year = std::stoi(m_period);
+            --year;
+            m_period = std::to_string(year);
+        }
+        UpdatePeriodLabel();
         Populate();
     }
 
     void DashboardWindow::OnNext(UINT, int, CWindow)
     {
-        int year = std::stoi(m_ym.substr(0, 4));
-        int month = std::stoi(m_ym.substr(5, 2));
-        if (++month == 13)
+        if (m_viewMode == MONTH)
         {
-            month = 1;
-            ++year;
+            int year = std::stoi(m_period.substr(0, 4));
+            int month = std::stoi(m_period.substr(5, 2));
+            if (++month == 13)
+            {
+                month = 1;
+                ++year;
+            }
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
+            m_period = buf;
         }
-        char buf[8];
-        snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
-        m_ym = buf;
-        UpdateMonthLabel();
+        else // YEAR
+        {
+            int year = std::stoi(m_period);
+            ++year;
+            m_period = std::to_string(year);
+        }
+        UpdatePeriodLabel();
         Populate();
     }
 
@@ -136,8 +173,9 @@ namespace fms
         }
 
         // Append default filename
+        std::string filenameSuffix = m_viewMode == MONTH ? m_period : ("year_" + m_period);
         std::wstring defaultName = pfc::stringcvt::string_wide_from_utf8(
-            ("report_" + m_ym + ".html").c_str());
+            ("report_" + filenameSuffix + ".html").c_str());
         initialPath += defaultName;
         wcsncpy_s(htmlBuf, MAX_PATH, initialPath.c_str(), _TRUNCATE);
 
@@ -158,7 +196,8 @@ namespace fms
         std::map<std::string, std::string> artMap = ReportExporter::collectArt(m_entries);
 
         // Generate HTML
-        std::string err = ReportExporter::exportHtml(m_ym, m_entries, htmlPath, artMap);
+        std::string periodLabel = m_viewMode == MONTH ? ("Monthly Stats – " + m_period) : ("Yearly Stats – " + m_period);
+        std::string err = ReportExporter::exportHtml(periodLabel, m_entries, htmlPath, artMap);
         if (!err.empty())
         {
             SetStatus(err.c_str());
@@ -288,7 +327,9 @@ namespace fms
 
     void DashboardWindow::Populate()
     {
-        m_entries = DbManager::get().queryMonth(m_ym);
+        m_entries = m_viewMode == MONTH
+                        ? DbManager::get().queryMonth(m_period)
+                        : DbManager::get().queryYear(m_period);
         // Sort by playcount desc initially
         std::sort(m_entries.begin(), m_entries.end(), [](const MonthlyEntry &a, const MonthlyEntry &b)
                   { return a.playcount > b.playcount; });
@@ -335,9 +376,9 @@ namespace fms
         SetStatus(statusText.c_str());
     }
 
-    void DashboardWindow::UpdateMonthLabel()
+    void DashboardWindow::UpdatePeriodLabel()
     {
-        SetDlgItemTextA(m_hWnd, IDC_STATIC, m_ym.c_str());
+        SetDlgItemTextA(m_hWnd, IDC_STATIC, m_period.c_str());
     }
 
     void DashboardWindow::SetStatus(const char *msg)

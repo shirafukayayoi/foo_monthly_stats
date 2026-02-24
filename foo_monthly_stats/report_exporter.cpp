@@ -166,7 +166,7 @@ namespace fms
     // HTML generation using pugixml
     // ---------------------------------------------------------------------------
     std::string ReportExporter::exportHtml(
-        const std::string &ym,
+        const std::string &periodLabel,
         const std::vector<MonthlyEntry> &entries,
         const std::wstring &htmlPath,
         const std::map<std::string, std::string> &artMap)
@@ -187,7 +187,7 @@ namespace fms
             meta.append_attribute("name") = "viewport";
             meta.append_attribute("content") = "width=device-width, initial-scale=1";
         }
-        head.append_child("title").text().set(("Monthly Stats – " + ym).c_str());
+        head.append_child("title").text().set(periodLabel.c_str());
 
         // Google Fonts (Inter)
         {
@@ -423,7 +423,7 @@ h1 {
         // Title
         {
             auto h1 = container.append_child("h1");
-            h1.text().set(("Monthly Stats – " + ym).c_str());
+            h1.text().set(periodLabel.c_str());
         }
 
         // Total playback time

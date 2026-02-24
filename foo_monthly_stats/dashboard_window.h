@@ -18,6 +18,12 @@ namespace fms
             IDD = IDD_DASHBOARD
         };
 
+        enum ViewMode
+        {
+            MONTH,
+            YEAR
+        };
+
         static void Open(); // Creates or activates the singleton window
         static void Close();
 
@@ -26,6 +32,7 @@ namespace fms
         MSG_WM_CLOSE(OnClose)
         MSG_WM_DESTROY(OnDestroy)
         MSG_WM_SIZE(OnSize)
+        COMMAND_HANDLER_EX(IDC_BTN_MODE_TOGGLE, BN_CLICKED, OnModeToggle)
         COMMAND_HANDLER_EX(IDC_BTN_PREV, BN_CLICKED, OnPrev)
         COMMAND_HANDLER_EX(IDC_BTN_NEXT, BN_CLICKED, OnNext)
         COMMAND_HANDLER_EX(IDC_BTN_REFRESH, BN_CLICKED, OnRefresh)
@@ -39,6 +46,7 @@ namespace fms
         void OnClose();
         void OnDestroy();
         void OnSize(UINT, CSize);
+        void OnModeToggle(UINT, int, CWindow);
         void OnPrev(UINT, int, CWindow);
         void OnNext(UINT, int, CWindow);
         void OnRefresh(UINT, int, CWindow);
@@ -48,10 +56,11 @@ namespace fms
 
         void SetupListColumns();
         void Populate();
-        void UpdateMonthLabel();
+        void UpdatePeriodLabel();
         void SetStatus(const char *msg);
 
-        std::string m_ym; // currently displayed "YYYY-MM"
+        ViewMode m_viewMode = MONTH;
+        std::string m_period; // "YYYY-MM" or "YYYY"
         std::vector<MonthlyEntry> m_entries;
         int m_sortCol = 4; // default: sort by plays
         bool m_sortAsc = false;
