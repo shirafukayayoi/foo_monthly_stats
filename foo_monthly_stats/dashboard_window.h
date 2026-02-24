@@ -35,7 +35,7 @@ namespace fms
         COMMAND_HANDLER_EX(IDC_BTN_MODE_TOGGLE, BN_CLICKED, OnModeToggle)
         COMMAND_HANDLER_EX(IDC_BTN_PREV, BN_CLICKED, OnPrev)
         COMMAND_HANDLER_EX(IDC_BTN_NEXT, BN_CLICKED, OnNext)
-        COMMAND_HANDLER_EX(IDC_BTN_REFRESH, BN_CLICKED, OnRefresh)
+        COMMAND_HANDLER_EX(IDC_BTN_RESET, BN_CLICKED, OnReset)
         COMMAND_HANDLER_EX(IDC_BTN_EXPORT, BN_CLICKED, OnExport)
         COMMAND_HANDLER_EX(IDC_BTN_PREFERENCES, BN_CLICKED, OnPreferences)
         NOTIFY_HANDLER_EX(IDC_LIST_TRACKS, LVN_COLUMNCLICK, OnColumnClick)
@@ -49,7 +49,7 @@ namespace fms
         void OnModeToggle(UINT, int, CWindow);
         void OnPrev(UINT, int, CWindow);
         void OnNext(UINT, int, CWindow);
-        void OnRefresh(UINT, int, CWindow);
+        void OnReset(UINT, int, CWindow);
         void OnExport(UINT, int, CWindow);
         void OnPreferences(UINT, int, CWindow);
         LRESULT OnColumnClick(LPNMHDR);
@@ -64,6 +64,10 @@ namespace fms
         std::vector<MonthlyEntry> m_entries;
         int m_sortCol = 4; // default: sort by plays
         bool m_sortAsc = false;
+
+        // Playback callback for auto-refresh
+        class PlaybackCallbackImpl;
+        std::unique_ptr<PlaybackCallbackImpl> m_playback_callback;
 
         static DashboardWindow *s_instance;
     };

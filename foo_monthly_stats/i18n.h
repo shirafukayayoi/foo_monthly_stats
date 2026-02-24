@@ -18,7 +18,7 @@ namespace fms
     {
         STR_PLUGIN_NAME = 100,
         STR_MONTHLY_STATS,
-        STR_REFRESH,
+        STR_RESET,
         STR_EXPORT,
         STR_PREFERENCES,
         STR_PREV_MONTH,

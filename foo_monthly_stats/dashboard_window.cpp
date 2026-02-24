@@ -7,6 +7,29 @@
 
 namespace fms
 {
+    // ---------------------------------------------------------------------------
+    // Playback callback for auto-refresh
+    // ---------------------------------------------------------------------------
+    class DashboardWindow::PlaybackCallbackImpl : public play_callback_impl_base
+    {
+    public:
+        explicit PlaybackCallbackImpl(DashboardWindow *owner)
+            : play_callback_impl_base(flag_on_playback_stop), m_owner(owner)
+        {
+        }
+
+        void on_playback_stop(play_control::t_stop_reason reason) override
+        {
+            // Auto-refresh dashboard when playback stops
+            if (m_owner && m_owner->IsWindow())
+            {
+                m_owner->Populate();
+            }
+        }
+
+    private:
+        DashboardWindow *m_owner;
+    };
 
     DashboardWindow *DashboardWindow::s_instance = nullptr;
 
@@ -42,6 +65,10 @@ namespace fms
         SetupListColumns();
         UpdatePeriodLabel();
         Populate();
+        
+        // Register playback callback for auto-refresh
+        m_playback_callback = std::make_unique<PlaybackCallbackImpl>(this);
+        
         return TRUE;
     }
 
@@ -152,7 +179,7 @@ namespace fms
         Populate();
     }
 
-    void DashboardWindow::OnRefresh(UINT, int, CWindow)
+    void DashboardWindow::OnReset(UINT, int, CWindow)
     {
         // Recalculate this period from play_log
         DbManager::get().refreshPeriod(m_period, m_viewMode == YEAR);
