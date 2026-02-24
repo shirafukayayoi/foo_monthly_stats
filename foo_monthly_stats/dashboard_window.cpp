@@ -178,7 +178,18 @@ namespace fms
             }
         }
 
-        SetStatus("Export succeeded.");
+        // Calculate total time for export confirmation message
+        double totalSeconds = 0.0;
+        for (const auto &e : m_entries)
+        {
+            totalSeconds += e.length_seconds * e.playcount;
+        }
+        int hours = static_cast<int>(totalSeconds / 3600);
+        int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+
+        std::string exportMsg = "Export succeeded. (" + std::to_string(m_entries.size()) +
+                                " tracks, " + std::to_string(hours) + "h " + std::to_string(minutes) + "m)";
+        SetStatus(exportMsg.c_str());
     }
 
     void DashboardWindow::OnPreferences(UINT, int, CWindow)
@@ -309,6 +320,19 @@ namespace fms
             setCol(5, (delta >= 0 ? "+" : "") + std::to_string(delta));
             ++i;
         }
+
+        // Calculate and display total listening time
+        double totalSeconds = 0.0;
+        for (const auto &e : m_entries)
+        {
+            totalSeconds += e.length_seconds * e.playcount;
+        }
+        int hours = static_cast<int>(totalSeconds / 3600);
+        int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+
+        std::string statusText = "Tracks: " + std::to_string(m_entries.size()) +
+                                 " | Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+        SetStatus(statusText.c_str());
     }
 
     void DashboardWindow::UpdateMonthLabel()
