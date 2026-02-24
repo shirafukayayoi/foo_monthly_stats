@@ -30,23 +30,44 @@ namespace fms
         if (!track.is_valid())
             return;
 
+        // Store current track info
+        m_current_track = track;
+        m_last_playback_time = 0.0;
+
         const char *path = track->get_path();
         uint64_t crcVal = crc64(path, strlen(path));
         char crcHex[17];
         snprintf(crcHex, sizeof(crcHex), "%016llx", (unsigned long long)crcVal);
+        m_current_track_crc = crcHex;
+    }
 
-        // Read metadata — get_info() is internally thread-safe; no explicit lock needed
+    void PlayRecorder::on_playback_time(double p_time)
+    {
+        // Update last playback position every second
+        m_last_playback_time = p_time;
+    }
+
+    void PlayRecorder::on_playback_stop(play_control::t_stop_reason reason)
+    {
+        if (!m_current_track.is_valid())
+            return;
+
+        // Only record if we actually played something (at least 1 second)
+        if (m_last_playback_time < 1.0)
+            return;
+
+        // Read metadata
         file_info_impl fi;
-        if (!track->get_info(fi))
+        if (!m_current_track->get_info(fi))
             return;
 
         TrackInfo ti;
-        ti.track_crc = crcHex;
-        ti.path = path;
+        ti.track_crc = m_current_track_crc;
+        ti.path = m_current_track->get_path();
         ti.title = fi.meta_get("TITLE", 0) ? fi.meta_get("TITLE", 0) : "";
         ti.artist = fi.meta_get("ARTIST", 0) ? fi.meta_get("ARTIST", 0) : "";
         ti.album = fi.meta_get("ALBUM", 0) ? fi.meta_get("ALBUM", 0) : "";
-        ti.length_seconds = track->get_length();
+        ti.length_seconds = m_last_playback_time; // Actual played time
 
         // UNIX epoch milliseconds (UTC)
         FILETIME ft;
@@ -58,6 +79,11 @@ namespace fms
         ti.played_at = static_cast<int64_t>((ul.QuadPart / 10000ULL) - 11644473600000ULL);
 
         DbManager::get().postPlay(ti);
+
+        // Clear current track
+        m_current_track.release();
+        m_last_playback_time = 0.0;
+        m_current_track_crc.clear();
     }
 
     // Register static factory
