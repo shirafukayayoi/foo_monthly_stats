@@ -215,7 +215,6 @@ namespace fms
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
     padding: 2rem 1.5rem;
     color: #1a1a1a;
 }
@@ -415,6 +414,54 @@ h1 {
 }
 )CSS");
 
+        // JavaScript to detect page height for full-page screenshot
+        auto script = head.append_child("script");
+        script.text().set(R"JS(
+window.addEventListener('load', function() {
+    // Wait for all images to load
+    var images = document.getElementsByTagName('img');
+    var loaded = 0;
+    var total = images.length;
+    
+    function checkComplete() {
+        if (loaded >= total) {
+            // Get actual content height using container
+            var container = document.querySelector('.container');
+            var body = document.body;
+            var bodyStyle = window.getComputedStyle(body);
+            var paddingTop = parseFloat(bodyStyle.paddingTop);
+            var paddingBottom = parseFloat(bodyStyle.paddingBottom);
+            
+            // Calculate total height: container height + body padding
+            var containerHeight = container ? container.offsetHeight : body.scrollHeight;
+            var height = Math.ceil(containerHeight + paddingTop + paddingBottom);
+            
+            document.title = 'HEIGHT:' + height;
+        }
+    }
+    
+    if (total === 0) {
+        checkComplete();
+    } else {
+        for (var i = 0; i < total; i++) {
+            if (images[i].complete) {
+                loaded++;
+            } else {
+                images[i].addEventListener('load', function() {
+                    loaded++;
+                    checkComplete();
+                });
+                images[i].addEventListener('error', function() {
+                    loaded++;
+                    checkComplete();
+                });
+            }
+        }
+        checkComplete();
+    }
+});
+)JS");
+
         // <body>
         auto body = html.append_child("body");
         auto container = body.append_child("div");
@@ -611,6 +658,100 @@ h1 {
     // ---------------------------------------------------------------------------
     // PNG via chrome-headless
     // ---------------------------------------------------------------------------
+    int ReportExporter::getPageHeight(
+        const std::string &chromePath,
+        const std::wstring &htmlPath)
+    {
+        if (chromePath.empty())
+            return 10000; // Default fallback height
+
+        std::wstring fileUrl = L"file:///";
+        {
+            std::wstring fwd = htmlPath;
+            for (auto &c : fwd)
+                if (c == L'\\')
+                    c = L'/';
+            fileUrl += fwd;
+        }
+
+        std::wstring wChrome = pfc::stringcvt::string_wide_from_utf8(chromePath.c_str());
+
+        // Use --dump-dom to get HTML with updated title containing height
+        std::wstring tempOut = htmlPath + L".dump";
+        std::wstring wCmd = L"\"" + wChrome + L"\""
+                                              L" --headless --disable-gpu"
+                                              L" --dump-dom"
+                                              L" --virtual-time-budget=10000"
+                                              L" --run-all-compositor-stages-before-draw"
+                                              L" \"" +
+                            fileUrl + L"\" > \"" + tempOut + L"\"";
+
+        STARTUPINFOW si{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        PROCESS_INFORMATION pi{};
+
+        // Use cmd.exe to handle output redirection
+        std::wstring cmdLine = L"cmd.exe /C \"" + wCmd + L"\"";
+        if (!CreateProcessW(nullptr, &cmdLine[0], nullptr, nullptr, FALSE,
+                            CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi))
+        {
+            return 10000; // Fallback on error
+        }
+
+        WaitForSingleObject(pi.hProcess, 30000);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        // Read dumped HTML and extract height from title
+        int height = 10000; // Default
+        HANDLE hFile = CreateFileW(tempOut.c_str(), GENERIC_READ, FILE_SHARE_READ,
+                                   nullptr, OPEN_EXISTING, 0, nullptr);
+        if (hFile != INVALID_HANDLE_VALUE)
+        {
+            DWORD fileSize = GetFileSize(hFile, nullptr);
+            if (fileSize > 0 && fileSize < 50 * 1024 * 1024) // Max 50MB
+            {
+                std::vector<char> buffer(fileSize + 1);
+                DWORD bytesRead = 0;
+                if (ReadFile(hFile, buffer.data(), fileSize, &bytesRead, nullptr))
+                {
+                    buffer[bytesRead] = '\0';
+                    std::string html(buffer.data());
+
+                    // Extract height from <title>HEIGHT:12345</title>
+                    size_t pos = html.find("<title>HEIGHT:");
+                    if (pos != std::string::npos)
+                    {
+                        pos += 14; // Length of "<title>HEIGHT:"
+                        size_t endPos = html.find("</title>", pos);
+                        if (endPos != std::string::npos)
+                        {
+                            std::string heightStr = html.substr(pos, endPos - pos);
+                            try
+                            {
+                                int parsedHeight = std::stoi(heightStr);
+                                if (parsedHeight > 0 && parsedHeight < 50000)
+                                {
+                                    height = parsedHeight + 50; // Add small padding
+                                }
+                            }
+                            catch (...)
+                            {
+                                // Keep default
+                            }
+                        }
+                    }
+                }
+            }
+            CloseHandle(hFile);
+            DeleteFileW(tempOut.c_str()); // Clean up temp file
+        }
+
+        return height;
+    }
+
     std::string ReportExporter::exportPng(
         const std::string &chromePath,
         const std::wstring &htmlPath,
@@ -619,8 +760,10 @@ h1 {
         if (chromePath.empty())
             return "chrome-headless.exe path is not configured in Preferences.";
 
-        // A4 landscape 300dpi = 3508×2480 px
-        // chrome-headless --headless --disable-gpu --screenshot=<out> --window-size=3508,2480 file:///<in>
+        // Get actual page height dynamically
+        int pageHeight = getPageHeight(chromePath, htmlPath);
+
+        // 3508px width (A4 landscape @ 300dpi), dynamic height for full page capture
         std::wstring fileUrl = L"file:///";
         {
             // Convert backslashes
@@ -632,13 +775,16 @@ h1 {
         }
 
         std::wstring wChrome = pfc::stringcvt::string_wide_from_utf8(chromePath.c_str());
+        std::wstring windowSize = L"--window-size=3508," + std::to_wstring(pageHeight);
         std::wstring wCmd = L"\"" + wChrome + L"\""
                                               L" --headless --disable-gpu"
+                                              L" --run-all-compositor-stages-before-draw"
+                                              L" --virtual-time-budget=10000"
                                               L" --screenshot=\"" +
                             pngPath + L"\""
-                                      L" --window-size=3508,2480"
-                                      L" \"" +
-                            fileUrl + L"\"";
+                                      L" " +
+                            windowSize +
+                            L" \"" + fileUrl + L"\"";
 
         STARTUPINFOW si{};
         si.cb = sizeof(si);
@@ -650,7 +796,7 @@ h1 {
             return "CreateProcess failed (error " + std::to_string(err) + ")";
         }
 
-        WaitForSingleObject(pi.hProcess, 60000); // wait up to 60 s
+        WaitForSingleObject(pi.hProcess, 120000); // wait up to 120 s for large pages
         DWORD exitCode = 0;
         GetExitCodeProcess(pi.hProcess, &exitCode);
         CloseHandle(pi.hProcess);

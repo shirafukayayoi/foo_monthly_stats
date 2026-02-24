@@ -204,18 +204,18 @@ namespace fms
             return;
         }
 
-        // Optional PNG
-        pfc::string8 chromePath = g_cfg_chrome_path.get();
-        if (!chromePath.is_empty())
-        {
-            std::wstring pngPath = htmlPath.substr(0, htmlPath.rfind(L'.')) + L".png";
-            err = ReportExporter::exportPng(chromePath.c_str(), htmlPath, pngPath);
-            if (!err.empty())
-            {
-                SetStatus(err.c_str());
-                return;
-            }
-        }
+        // PNG generation disabled (HTML only)
+        // pfc::string8 chromePath = g_cfg_chrome_path.get();
+        // if (!chromePath.is_empty())
+        // {
+        //     std::wstring pngPath = htmlPath.substr(0, htmlPath.rfind(L'.')) + L".png";
+        //     err = ReportExporter::exportPng(chromePath.c_str(), htmlPath, pngPath);
+        //     if (!err.empty())
+        //     {
+        //         SetStatus(err.c_str());
+        //         return;
+        //     }
+        // }
 
         // Calculate total time for export confirmation message
         double totalSeconds = 0.0;

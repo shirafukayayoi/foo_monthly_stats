@@ -33,6 +33,12 @@ namespace fms
             const std::string &chromePath,
             const std::wstring &htmlPath,
             const std::wstring &pngPath);
+
+    private:
+        // Get actual page height by running Chrome headless to read HTML
+        static int getPageHeight(
+            const std::string &chromePath,
+            const std::wstring &htmlPath);
     };
 
 } // namespace fms
