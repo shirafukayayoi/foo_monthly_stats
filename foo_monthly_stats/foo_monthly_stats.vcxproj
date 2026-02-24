@@ -250,6 +250,21 @@
       <Project>{e8091321-d79d-4575-86ef-064ea1a4a20d}</Project>
     </ProjectReference>
   </ItemGroup>
+  <!-- Post-build: Create .fb2k-component package -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <PropertyGroup>
+      <ComponentDir>$(ProjectDir)_result</ComponentDir>
+      <ComponentFile>$(ComponentDir)\foo_monthly_stats.fb2k-component</ComponentFile>
+      <TempZip>$(ComponentDir)\foo_monthly_stats.zip</TempZip>
+      <DllSource>$(TargetDir)$(TargetFileName)</DllSource>
+    </PropertyGroup>
+    <MakeDir Directories="$(ComponentDir)" />
+    <Delete Files="$(TempZip)" Condition="Exists('$(TempZip)')" />
+    <Delete Files="$(ComponentFile)" Condition="Exists('$(ComponentFile)')" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Compress-Archive -Path '$(DllSource)' -DestinationPath '$(TempZip)' -Force&quot;" />
+    <Move SourceFiles="$(TempZip)" DestinationFiles="$(ComponentFile)" />
+    <Message Text="Created component package: $(ComponentFile)" Importance="high" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

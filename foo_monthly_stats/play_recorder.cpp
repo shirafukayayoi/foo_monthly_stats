@@ -46,6 +46,7 @@ namespace fms
         ti.title = fi.meta_get("TITLE", 0) ? fi.meta_get("TITLE", 0) : "";
         ti.artist = fi.meta_get("ARTIST", 0) ? fi.meta_get("ARTIST", 0) : "";
         ti.album = fi.meta_get("ALBUM", 0) ? fi.meta_get("ALBUM", 0) : "";
+        ti.length_seconds = track->get_length();
 
         // UNIX epoch milliseconds (UTC)
         FILETIME ft;

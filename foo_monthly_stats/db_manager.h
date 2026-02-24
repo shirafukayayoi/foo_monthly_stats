@@ -14,7 +14,8 @@ namespace fms
         std::string title;
         std::string artist;
         std::string album;
-        int64_t played_at; // UNIX epoch milliseconds
+        double length_seconds; // track length in seconds
+        int64_t played_at;     // UNIX epoch milliseconds
     };
 
     // -----------------------------------------------------------------------
@@ -28,6 +29,7 @@ namespace fms
         std::string title;
         std::string artist;
         std::string album;
+        double length_seconds; // track length in seconds
         int64_t playcount;
         int64_t prev_playcount; // same month previous year (for delta)
     };
