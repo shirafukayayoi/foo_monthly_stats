@@ -122,11 +122,24 @@ namespace fms
 
     void DashboardWindow::OnExport(UINT, int, CWindow)
     {
-        // Ask user for save location
+        // Ask user for save location - use Downloads folder as default
         wchar_t htmlBuf[MAX_PATH] = {};
+
+        // Get Downloads folder path using SHGetKnownFolderPath
+        PWSTR pDownloadPath = nullptr;
+        std::wstring initialPath;
+        if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Downloads, 0, nullptr, &pDownloadPath)))
+        {
+            initialPath = pDownloadPath;
+            CoTaskMemFree(pDownloadPath);
+            initialPath += L"\\";
+        }
+
+        // Append default filename
         std::wstring defaultName = pfc::stringcvt::string_wide_from_utf8(
             ("report_" + m_ym + ".html").c_str());
-        wcsncpy_s(htmlBuf, MAX_PATH, defaultName.c_str(), _TRUNCATE);
+        initialPath += defaultName;
+        wcsncpy_s(htmlBuf, MAX_PATH, initialPath.c_str(), _TRUNCATE);
 
         OPENFILENAMEW ofn{};
         ofn.lStructSize = sizeof(ofn);
@@ -139,7 +152,7 @@ namespace fms
         if (!GetSaveFileNameW(&ofn))
             return;
 
-        std::string htmlPath = pfc::stringcvt::string_utf8_from_wide(htmlBuf).get_ptr();
+        std::wstring htmlPath = htmlBuf;
 
         // Collect album art for each entry (runs on main thread, SDK access allowed)
         std::map<std::string, std::string> artMap = ReportExporter::collectArt(m_entries);
@@ -156,7 +169,7 @@ namespace fms
         pfc::string8 chromePath = g_cfg_chrome_path.get();
         if (!chromePath.is_empty())
         {
-            std::string pngPath = htmlPath.substr(0, htmlPath.rfind('.')) + ".png";
+            std::wstring pngPath = htmlPath.substr(0, htmlPath.rfind(L'.')) + L".png";
             err = ReportExporter::exportPng(chromePath.c_str(), htmlPath, pngPath);
             if (!err.empty())
             {

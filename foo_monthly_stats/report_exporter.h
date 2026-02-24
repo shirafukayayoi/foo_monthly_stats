@@ -24,15 +24,15 @@ namespace fms
         static std::string exportHtml(
             const std::string &ym,
             const std::vector<MonthlyEntry> &entries,
-            const std::string &htmlPath,
+            const std::wstring &htmlPath,
             const std::map<std::string, std::string> &artMap = {});
 
         // Launch chrome-headless.exe to convert htmlPath → pngPath.
         // chromePath: full path to chrome-headless.exe (may be empty = return error string)
         static std::string exportPng(
             const std::string &chromePath,
-            const std::string &htmlPath,
-            const std::string &pngPath);
+            const std::wstring &htmlPath,
+            const std::wstring &pngPath);
     };
 
 } // namespace fms

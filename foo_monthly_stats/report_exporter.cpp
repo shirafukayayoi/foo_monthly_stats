@@ -43,32 +43,121 @@ namespace fms
         try
         {
             auto aam = album_art_manager_v2::get();
+            auto lib = library_manager::get();
             abort_callback_dummy abort;
+
             for (const auto &e : entries)
             {
-                if (e.path.empty())
-                    continue;
+                metadb_handle_ptr h;
+
+                // If path is available, use it directly
+                if (!e.path.empty())
+                {
+                    try
+                    {
+                        h = metadb::get()->handle_create(e.path.c_str(), 0);
+                    }
+                    catch (...)
+                    {
+                        console::printf("[fms] Failed to create handle from path: %s", e.path.c_str());
+                    }
+                }
+
+                // If no path or handle creation failed, search library by metadata
+                if (!h.is_valid())
+                {
+                    console::printf("[fms] Searching library for: %s - %s - %s",
+                                    e.title.c_str(), e.artist.c_str(), e.album.c_str());
+
+                    try
+                    {
+                        metadb_handle_list allItems;
+                        lib->get_all_items(allItems);
+
+                        // Search for matching track
+                        for (t_size i = 0; i < allItems.get_count(); ++i)
+                        {
+                            metadb_handle_ptr item = allItems[i];
+                            file_info_impl fi;
+                            if (item->get_info(fi))
+                            {
+                                const char *title = fi.meta_get("TITLE", 0);
+                                const char *artist = fi.meta_get("ARTIST", 0);
+                                const char *album = fi.meta_get("ALBUM", 0);
+
+                                if (title && artist && album &&
+                                    e.title == title &&
+                                    e.artist == artist &&
+                                    e.album == album)
+                                {
+                                    h = item;
+                                    console::printf("[fms] Found in library: %s", item->get_path());
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!h.is_valid())
+                        {
+                            console::printf("[fms] Track not found in library");
+                            continue;
+                        }
+                    }
+                    catch (...)
+                    {
+                        console::printf("[fms] Exception searching library");
+                        continue;
+                    }
+                }
+
+                // Now we have a valid handle, try to get album art
                 try
                 {
-                    metadb_handle_ptr h = metadb::get()->handle_create(e.path.c_str(), 0);
                     metadb_handle_list handles;
                     handles.add_item(h);
                     pfc::list_single_ref_t<GUID> types(album_art_ids::cover_front);
                     auto inst = aam->open(handles, types, abort);
-                    album_art_data_ptr data = inst->query(album_art_ids::cover_front, abort);
-                    if (data.is_valid() && data->get_size() > 0)
+
+                    if (inst.is_valid())
                     {
-                        artMap[e.track_crc] = "data:image/jpeg;base64," +
-                                              base64_encode(data->get_ptr(), data->get_size());
+                        album_art_data_ptr data = inst->query(album_art_ids::cover_front, abort);
+                        if (data.is_valid() && data->get_size() > 0)
+                        {
+                            // Successfully got album art
+                            std::string dataUri = "data:image/jpeg;base64," +
+                                                  base64_encode(data->get_ptr(), data->get_size());
+                            artMap[e.track_crc] = dataUri;
+                            console::printf("[fms] Got album art for: %s (%u bytes)", e.title.c_str(), (unsigned)data->get_size());
+                        }
+                        else
+                        {
+                            console::printf("[fms] No album art data for: %s", e.title.c_str());
+                        }
                     }
+                    else
+                    {
+                        console::printf("[fms] Failed to open album art instance for: %s", e.title.c_str());
+                    }
+                }
+                catch (const std::exception &ex)
+                {
+                    console::printf("[fms] Exception getting art for %s: %s", e.title.c_str(), ex.what());
                 }
                 catch (...)
                 {
+                    console::printf("[fms] Unknown exception getting art for: %s", e.title.c_str());
                 }
             }
+
+            console::printf("[fms] Album art collection complete. Found %u of %u covers.", (unsigned)artMap.size(), (unsigned)entries.size());
+        }
+        catch (const std::exception &ex)
+        {
+            console::printf("[fms] Exception in collectArt: %s", ex.what());
         }
         catch (...)
         {
+            console::print("[fms] Unknown exception in collectArt");
         }
         return artMap;
     }
@@ -79,7 +168,7 @@ namespace fms
     std::string ReportExporter::exportHtml(
         const std::string &ym,
         const std::vector<MonthlyEntry> &entries,
-        const std::string &htmlPath,
+        const std::wstring &htmlPath,
         const std::map<std::string, std::string> &artMap)
     {
         pugi::xml_document doc;
@@ -336,10 +425,13 @@ h1 {
             deltaDiv.text().set(deltaStr.c_str());
         }
 
-        // Save via pugixml's save_file
+        // Save via pugixml's save_file (use wide string to avoid encoding issues)
         bool ok = doc.save_file(htmlPath.c_str(), "  ", pugi::format_default | pugi::format_write_bom, pugi::encoding_utf8);
         if (!ok)
-            return "Failed to write HTML file: " + htmlPath;
+        {
+            std::string errPath = pfc::stringcvt::string_utf8_from_wide(htmlPath.c_str());
+            return "Failed to write HTML file: " + errPath;
+        }
         return "";
     }
 
@@ -348,37 +440,36 @@ h1 {
     // ---------------------------------------------------------------------------
     std::string ReportExporter::exportPng(
         const std::string &chromePath,
-        const std::string &htmlPath,
-        const std::string &pngPath)
+        const std::wstring &htmlPath,
+        const std::wstring &pngPath)
     {
         if (chromePath.empty())
             return "chrome-headless.exe path is not configured in Preferences.";
 
         // A4 landscape 300dpi = 3508×2480 px
         // chrome-headless --headless --disable-gpu --screenshot=<out> --window-size=3508,2480 file:///<in>
-        pfc::string8 fileUrl = "file:///";
+        std::wstring fileUrl = L"file:///";
         {
             // Convert backslashes
-            std::string fwd = htmlPath;
+            std::wstring fwd = htmlPath;
             for (auto &c : fwd)
-                if (c == '\\')
-                    c = '/';
-            fileUrl += fwd.c_str();
+                if (c == L'\\')
+                    c = L'/';
+            fileUrl += fwd;
         }
 
-        std::string cmdLine = "\"" + chromePath + "\""
-                                                  " --headless --disable-gpu"
-                                                  " --screenshot=\"" +
-                              pngPath + "\""
-                                        " --window-size=3508,2480"
-                                        " \"" +
-                              std::string(fileUrl.c_str()) + "\"";
+        std::wstring wChrome = pfc::stringcvt::string_wide_from_utf8(chromePath.c_str());
+        std::wstring wCmd = L"\"" + wChrome + L"\""
+                                              L" --headless --disable-gpu"
+                                              L" --screenshot=\"" +
+                            pngPath + L"\""
+                                      L" --window-size=3508,2480"
+                                      L" \"" +
+                            fileUrl + L"\"";
 
         STARTUPINFOW si{};
         si.cb = sizeof(si);
         PROCESS_INFORMATION pi{};
-
-        std::wstring wCmd = pfc::stringcvt::string_wide_from_utf8(cmdLine.c_str());
         if (!CreateProcessW(nullptr, &wCmd[0], nullptr, nullptr, FALSE,
                             CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi))
         {
