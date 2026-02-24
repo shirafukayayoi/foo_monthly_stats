@@ -6,7 +6,7 @@
 namespace fms
 {
 
-    // CRC64 – must match db_manager.cpp's implementation; share via header later
+    // CRC64 – must match db_manager.cpp's implementation
     static uint64_t crc64(const char *data, size_t len)
     {
         static const uint64_t POLY = 0xad93d23594c935a9ULL;
@@ -25,49 +25,36 @@ namespace fms
         return crc;
     }
 
-    void PlayRecorder::on_playback_new_track(metadb_handle_ptr track)
+    void PlaybackStatsCollector::on_item_played(metadb_handle_ptr p_item)
     {
-        if (!track.is_valid())
+        if (!p_item.is_valid())
+        {
+            console::formatter() << "[foo_monthly_stats] on_item_played: invalid track";
             return;
-
-        // Store current track info
-        m_current_track = track;
-        m_last_playback_time = 0.0;
-
-        const char *path = track->get_path();
-        uint64_t crcVal = crc64(path, strlen(path));
-        char crcHex[17];
-        snprintf(crcHex, sizeof(crcHex), "%016llx", (unsigned long long)crcVal);
-        m_current_track_crc = crcHex;
-    }
-
-    void PlayRecorder::on_playback_time(double p_time)
-    {
-        // Update last playback position every second
-        m_last_playback_time = p_time;
-    }
-
-    void PlayRecorder::on_playback_stop(play_control::t_stop_reason reason)
-    {
-        if (!m_current_track.is_valid())
-            return;
-
-        // Only record if we actually played something (at least 1 second)
-        if (m_last_playback_time < 1.0)
-            return;
+        }
 
         // Read metadata
         file_info_impl fi;
-        if (!m_current_track->get_info(fi))
+        if (!p_item->get_info(fi))
+        {
+            console::formatter() << "[foo_monthly_stats] on_item_played: failed to get file info";
             return;
+        }
 
+        // Calculate CRC for track path
+        const char *path = p_item->get_path();
+        uint64_t crcVal = crc64(path, strlen(path));
+        char crcHex[17];
+        snprintf(crcHex, sizeof(crcHex), "%016llx", (unsigned long long)crcVal);
+
+        // Build TrackInfo
         TrackInfo ti;
-        ti.track_crc = m_current_track_crc;
-        ti.path = m_current_track->get_path();
+        ti.track_crc = crcHex;
+        ti.path = path;
         ti.title = fi.meta_get("TITLE", 0) ? fi.meta_get("TITLE", 0) : "";
         ti.artist = fi.meta_get("ARTIST", 0) ? fi.meta_get("ARTIST", 0) : "";
         ti.album = fi.meta_get("ALBUM", 0) ? fi.meta_get("ALBUM", 0) : "";
-        ti.length_seconds = m_last_playback_time; // Actual played time
+        ti.length_seconds = fi.get_length(); // Full track length
 
         // UNIX epoch milliseconds (UTC)
         FILETIME ft;
@@ -75,18 +62,15 @@ namespace fms
         ULARGE_INTEGER ul;
         ul.LowPart = ft.dwLowDateTime;
         ul.HighPart = ft.dwHighDateTime;
-        // FILETIME is 100-ns ticks since 1601-01-01; convert to ms since 1970-01-01
         ti.played_at = static_cast<int64_t>((ul.QuadPart / 10000ULL) - 11644473600000ULL);
 
-        DbManager::get().postPlay(ti);
+        console::formatter() << "[foo_monthly_stats] on_item_played: " << ti.title.c_str()
+                             << " by " << ti.artist.c_str() << " (length: " << ti.length_seconds << "s)";
 
-        // Clear current track
-        m_current_track.release();
-        m_last_playback_time = 0.0;
-        m_current_track_crc.clear();
+        DbManager::get().postPlay(ti);
     }
 
     // Register static factory
-    static play_callback_static_factory_t<PlayRecorder> g_playRecorder;
+    static playback_statistics_collector_factory_t<PlaybackStatsCollector> g_playback_stats_collector;
 
 } // namespace fms

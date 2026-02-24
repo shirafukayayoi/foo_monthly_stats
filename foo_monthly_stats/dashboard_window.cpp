@@ -21,9 +21,10 @@ namespace fms
         void on_playback_stop(play_control::t_stop_reason reason) override
         {
             // Auto-refresh dashboard when playback stops
+            // Use a timer to delay the update, allowing async DB write to complete
             if (m_owner && m_owner->IsWindow())
             {
-                m_owner->Populate();
+                m_owner->SetTimer(1, 200); // 200ms delay
             }
         }
 
@@ -65,10 +66,10 @@ namespace fms
         SetupListColumns();
         UpdatePeriodLabel();
         Populate();
-        
+
         // Register playback callback for auto-refresh
         m_playback_callback = std::make_unique<PlaybackCallbackImpl>(this);
-        
+
         return TRUE;
     }
 
@@ -80,7 +81,17 @@ namespace fms
 
     void DashboardWindow::OnDestroy()
     {
+        KillTimer(1); // Stop any pending timer
         s_instance = nullptr;
+    }
+
+    void DashboardWindow::OnTimer(UINT_PTR nIDEvent)
+    {
+        if (nIDEvent == 1)
+        {
+            KillTimer(1);
+            Populate(); // Refresh after DB write completes
+        }
     }
 
     void DashboardWindow::OnSize(UINT, CSize sz)

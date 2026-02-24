@@ -32,6 +32,7 @@ namespace fms
         MSG_WM_CLOSE(OnClose)
         MSG_WM_DESTROY(OnDestroy)
         MSG_WM_SIZE(OnSize)
+        MSG_WM_TIMER(OnTimer)
         COMMAND_HANDLER_EX(IDC_BTN_MODE_TOGGLE, BN_CLICKED, OnModeToggle)
         COMMAND_HANDLER_EX(IDC_BTN_PREV, BN_CLICKED, OnPrev)
         COMMAND_HANDLER_EX(IDC_BTN_NEXT, BN_CLICKED, OnNext)
@@ -46,6 +47,7 @@ namespace fms
         void OnClose();
         void OnDestroy();
         void OnSize(UINT, CSize);
+        void OnTimer(UINT_PTR nIDEvent);
         void OnModeToggle(UINT, int, CWindow);
         void OnPrev(UINT, int, CWindow);
         void OnNext(UINT, int, CWindow);

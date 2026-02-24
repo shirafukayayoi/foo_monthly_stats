@@ -1,0 +1,141 @@
+# Release Notes
+
+## v1.2.0 - 2026-02-25
+
+### 🔄 Breaking Changes
+
+- **Migrated to foobar2000's standard playback statistics system**: Now uses `playback_statistics_collector` API instead of custom `play_callback_static` implementation
+  - Recording threshold changed: Now records after **60 seconds** OR when track ends (if at least **1/3** was played)
+  - Previous versions recorded after just 1 second of playback
+  - This aligns with foobar2000's built-in Playback Statistics component behavior
+
+### 🐛 Bug Fixes
+
+- **Fixed loop playback recording**: Repeat (track) mode now correctly records multiple plays automatically
+  - Previous implementation failed to detect loop iterations, only recording the first play
+  - foobar2000's built-in statistics system now handles loop detection seamlessly
+  - Each loop iteration is properly recorded when it meets the 60-second or 1/3-completion threshold
+
+### ⚙️ Changes
+
+- **Simplified and more reliable playback recording**: Removed complex manual loop detection logic (time jump detection, seek monitoring)
+- **Better compatibility**: Now follows the same recording rules as other playback statistics components
+
+### 📝 Technical Notes
+
+- Replaced `play_callback_static` with `playback_statistics_collector`
+- Removed `on_playback_time`, `on_playback_stop`, `on_playback_seek` implementations
+- Now implements only `on_item_played()` callback
+- Codebase significantly simplified by leveraging foobar2000's core playback statistics system
+- Database schema remains unchanged (backward compatible)
+
+### 🔧 Migration Notes
+
+- **Important**: The 60-second threshold means very short tracks (< 20 seconds) may not be recorded if you skip them quickly
+- Existing database and statistics are fully compatible
+- For users relying on 1-second threshold: Consider this a more accurate representation of "listened" vs "skipped" tracks
+
+---
+
+## v1.2.0 - 2026-02-25（日本語）
+
+### 🔄 破壊的変更
+
+- **foobar2000標準の再生統計システムに移行**: カスタム実装の`play_callback_static`から`playback_statistics_collector` APIに変更
+  - 記録の閾値が変更: **60秒再生**、または**トラックの1/3以上再生して終了**した場合に記録
+  - 以前のバージョンでは1秒以上の再生で記録していました
+  - foobar2000の組み込みPlayback Statisticsコンポーネントと同じ動作になります
+
+### 🐛 バグ修正
+
+- **ループ再生の記録を修正**: Repeat (track) モードで複数回の再生が正しく自動記録されるようになりました
+  - 以前の実装ではループの繰り返しを検出できず、最初の1回しか記録されませんでした
+  - foobar2000の組み込み統計システムがループ検出をシームレスに処理します
+  - 各ループは60秒閾値または1/3完了閾値を満たすと正しく記録されます
+
+### ⚙️ 変更点
+
+- **シンプルで信頼性の高い再生記録**: 複雑な手動ループ検出ロジック（時間ジャンプ検出、シーク監視）を削除
+- **互換性の向上**: 他の再生統計コンポーネントと同じ記録ルールに従います
+
+### 📝 技術的な注意事項
+
+- `play_callback_static`から`playback_statistics_collector`に置き換え
+- `on_playback_time`、`on_playback_stop`、`on_playback_seek`の実装を削除
+- `on_item_played()`コールバックのみを実装
+- foobar2000のコア再生統計システムを活用することでコードベースを大幅に簡略化
+- データベーススキーマは変更なし（後方互換性あり）
+
+### 🔧 移行に関する注意事項
+
+- **重要**: 60秒閾値により、非常に短いトラック（< 20秒）を素早くスキップした場合、記録されない可能性があります
+- 既存のデータベースと統計は完全に互換性があります
+- 1秒閾値に依存していたユーザーへ: これは「聴いた」vs「スキップした」トラックのより正確な表現と考えてください
+
+---
+
+## v1.1.1 - 2026-02-25
+
+### 🐛 Bug Fixes
+
+- **Fixed dashboard not updating in real-time**: The dashboard now automatically refreshes when playback stops, eliminating the need to restart foobar2000 to see new play statistics
+- **Fixed missing UI synchronization**: Dashboard window now subscribes to playback events via `play_callback_manager`, ensuring the view stays up-to-date with recorded plays
+
+### ⚙️ Changes
+
+- **Renamed "Refresh" button to "Reset"**: Better reflects the button's actual function (deletes and recalculates monthly_count from play_log for the selected period)
+- **Improved user experience**: No manual intervention needed to see newly recorded tracks in the dashboard
+
+### 📝 Technical Notes
+
+- Implemented `PlaybackCallbackImpl` class inheriting from `play_callback_impl_base`
+- Dashboard registers `flag_on_playback_stop` callback on initialization
+- Callback automatically invokes `Populate()` when playback stops, refreshing the list view
+- Database schema remains unchanged (backward compatible with v1.0.0 and v1.1.0)
+- `OnReset()` method renamed from `OnRefresh()` for clarity
+
+### 🔧 Migration Notes
+
+- No database migration required
+- Existing installations will automatically benefit from real-time updates
+- "Reset" button performs the same function as the previous "Refresh" button
+
+---
+
+## v1.1.1 - 2026-02-25（日本語）
+
+### 🐛 バグ修正
+
+- **ダッシュボードがリアルタイム更新されない問題を修正**: 再生停止時にダッシュボードが自動的に更新されるようになり、新しい再生統計を表示するためにfoobar2000を再起動する必要がなくなりました
+- **UI同期の欠落を修正**: ダッシュボードウィンドウが`play_callback_manager`経由で再生イベントを購読し、記録された再生データとビューが常に同期されるようになりました
+
+### ⚙️ 変更点
+
+- **「Refresh」ボタンを「Reset」に改名**: ボタンの実際の機能（選択期間のmonthly_countをplay_logから削除→再計算）をより正確に反映
+- **ユーザー体験の向上**: ダッシュボードに新しく記録されたトラックを表示するために手動操作が不要になりました
+
+### 📝 技術的な注意事項
+
+- `play_callback_impl_base`を継承した`PlaybackCallbackImpl`クラスを実装
+- ダッシュボードは初期化時に`flag_on_playback_stop`コールバックを登録
+- 再生停止時にコールバックが自動的に`Populate()`を呼び出し、リストビューを更新
+- データベーススキーマは変更なし（v1.0.0およびv1.1.0と後方互換性あり）
+- `OnRefresh()`メソッドを`OnReset()`に改名（明確化のため）
+
+### 🔧 移行に関する注意事項
+
+- データベース移行は不要
+- 既存のインストールは自動的にリアルタイム更新の恩恵を受けます
+- 「Reset」ボタンは以前の「Refresh」ボタンと同じ機能を実行します
+
+---
+
+## v1.1.0 - Initial tracked release
+
+### Features
+
+- Monthly statistics dashboard showing plays, playtime, and unique tracks
+- Top 10 tracks and artists for each month
+- Export functionality to CSV format
+- SQLite database for persistent storage
+- Real-time playback recording
