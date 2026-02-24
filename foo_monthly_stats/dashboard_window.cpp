@@ -272,7 +272,7 @@ namespace fms
             {L"Artist", 120},
             {L"Album", 120},
             {L"Plays", 60},
-            {L"Δ", 50},
+            {L"先月比", 60},
         };
         LVCOLUMNW lvc{};
         lvc.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_FMT;
