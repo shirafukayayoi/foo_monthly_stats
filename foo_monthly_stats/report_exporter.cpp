@@ -231,6 +231,76 @@ h1 {
     text-align: center;
     text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
+.artist-ranking {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 2rem auto;
+    max-width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.artist-ranking h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.artist-list {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    padding: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.3) transparent;
+}
+.artist-list::-webkit-scrollbar {
+    height: 8px;
+}
+.artist-list::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+}
+.artist-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+}
+.artist-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 140px;
+    text-align: center;
+}
+.artist-avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin-bottom: 0.75rem;
+    border: 3px solid rgba(255,255,255,0.5);
+    transition: transform 0.3s ease;
+}
+.artist-avatar:hover {
+    transform: scale(1.05);
+}
+.artist-name {
+    font-weight: 600;
+    color: white;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 140px;
+}
+.artist-plays {
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+}
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -372,6 +442,91 @@ h1 {
 
             std::string timeText = "Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
             stats.text().set(timeText.c_str());
+        }
+
+        // Artist Ranking (Top 10)
+        {
+            // Aggregate plays by artist and track their most played song
+            struct ArtistInfo
+            {
+                int64_t totalPlays = 0;
+                std::string topTrackCrc;
+                int64_t topTrackPlays = 0;
+            };
+            std::map<std::string, ArtistInfo> artistMap;
+
+            for (const auto &e : entries)
+            {
+                auto &info = artistMap[e.artist];
+                info.totalPlays += e.playcount;
+
+                // Track the most played song for this artist
+                if (e.playcount > info.topTrackPlays)
+                {
+                    info.topTrackPlays = e.playcount;
+                    info.topTrackCrc = e.track_crc;
+                }
+            }
+
+            // Sort by total playcount descending
+            std::vector<std::pair<std::string, ArtistInfo>> artistVec;
+            for (const auto &[artist, info] : artistMap)
+            {
+                artistVec.push_back({artist, info});
+            }
+            std::sort(artistVec.begin(), artistVec.end(),
+                      [](const auto &a, const auto &b)
+                      { return a.second.totalPlays > b.second.totalPlays; });
+
+            // Display top 10 artists
+            if (!artistVec.empty())
+            {
+                auto rankingDiv = container.append_child("div");
+                rankingDiv.append_attribute("class") = "artist-ranking";
+
+                auto h2 = rankingDiv.append_child("h2");
+                h2.text().set("Top Artists");
+
+                auto artistList = rankingDiv.append_child("div");
+                artistList.append_attribute("class") = "artist-list";
+
+                int count = 0;
+                for (const auto &[artist, info] : artistVec)
+                {
+                    if (++count > 10)
+                        break;
+
+                    auto item = artistList.append_child("div");
+                    item.append_attribute("class") = "artist-item";
+
+                    // Album art (circular avatar)
+                    auto it = artMap.find(info.topTrackCrc);
+                    if (it != artMap.end())
+                    {
+                        auto img = item.append_child("img");
+                        img.append_attribute("class") = "artist-avatar";
+                        img.append_attribute("src") = it->second.c_str();
+                        img.append_attribute("alt") = artist.c_str();
+                        img.append_attribute("loading") = "lazy";
+                    }
+                    else
+                    {
+                        // Placeholder for missing art
+                        auto placeholder = item.append_child("div");
+                        placeholder.append_attribute("class") = "artist-avatar";
+                        placeholder.append_attribute("style") = "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);";
+                    }
+
+                    auto nameDiv = item.append_child("div");
+                    nameDiv.append_attribute("class") = "artist-name";
+                    nameDiv.text().set(artist.c_str());
+
+                    auto playsDiv = item.append_child("div");
+                    playsDiv.append_attribute("class") = "artist-plays";
+                    std::string playsText = std::to_string(info.totalPlays) + " plays";
+                    playsDiv.text().set(playsText.c_str());
+                }
+            }
         }
 
         // Grid
