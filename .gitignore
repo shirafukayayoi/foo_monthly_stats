@@ -301,6 +301,12 @@ _result/
 
 # Chrome-headless screenshot temp files
 *.png.tmp
+*.dump
+*.html.dump
+
+# Test output files
+tests/*.html
+tests/*.png
 
 # Python cache (scripts/)
 scripts/__pycache__/
