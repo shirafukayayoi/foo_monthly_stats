@@ -125,12 +125,15 @@ namespace fms
         {
             sqlite3_stmt *stmt = nullptr;
             const char *sql =
-                "INSERT INTO monthly_count(ym, track_crc, path, title, artist, album, length_seconds, playcount)"
+                "INSERT INTO monthly_count(ym, track_crc, path, title, artist, album, length_seconds, playcount, total_time_seconds)"
                 " SELECT strftime('%Y-%m', datetime(played_at/1000, 'unixepoch', 'localtime')) AS ym,"
-                "        track_crc, path, title, artist, album, length_seconds, COUNT(*) AS playcount"
+                "        track_crc, path, title, artist, album,"
+                "        MAX(length_seconds) AS length_seconds,"
+                "        SUM(CASE WHEN played_seconds = 0 THEN 1 ELSE 0 END) AS playcount,"
+                "        SUM(played_seconds) AS total_time_seconds"
                 " FROM play_log"
                 " WHERE ym LIKE ?"
-                " GROUP BY ym, track_crc, path, title, artist, album, length_seconds";
+                " GROUP BY ym, track_crc, path, title, artist, album";
 
             if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
             {
@@ -185,6 +188,7 @@ namespace fms
             "  album     TEXT,"
             "  length_seconds REAL NOT NULL DEFAULT 0,"
             "  playcount INTEGER NOT NULL DEFAULT 0,"
+            "  total_time_seconds REAL NOT NULL DEFAULT 0,"
             "  PRIMARY KEY (ym, track_crc)"
             ");";
         char *errmsg = nullptr;
@@ -192,6 +196,15 @@ namespace fms
         if (errmsg)
         {
             FB2K_console_formatter() << "foo_monthly_stats: schema error: " << errmsg;
+            sqlite3_free(errmsg);
+        }
+
+        // For existing databases, try to add the column (ignore error if it already exists)
+        const char *alterSql = "ALTER TABLE monthly_count ADD COLUMN total_time_seconds REAL NOT NULL DEFAULT 0;";
+        sqlite3_exec(m_db, alterSql, nullptr, nullptr, &errmsg);
+        if (errmsg)
+        {
+            // Ignore error if column already exists
             sqlite3_free(errmsg);
         }
         // Migrate existing DBs: add path and length_seconds columns if they don't exist yet
@@ -237,8 +250,9 @@ namespace fms
         {
             sqlite3_stmt *stmt = nullptr;
             const char *sql =
-                "INSERT INTO monthly_count(ym,track_crc,path,title,artist,album,length_seconds,playcount) VALUES(?,?,?,?,?,?,?,1)"
-                " ON CONFLICT(ym,track_crc) DO UPDATE SET playcount=playcount+1,"
+                "INSERT INTO monthly_count(ym,track_crc,path,title,artist,album,length_seconds,playcount,total_time_seconds) VALUES(?,?,?,?,?,?,?,?,?)"
+                " ON CONFLICT(ym,track_crc) DO UPDATE SET playcount=playcount+excluded.playcount,"
+                "  total_time_seconds=total_time_seconds+excluded.total_time_seconds,"
                 "  path=excluded.path, title=excluded.title, artist=excluded.artist, album=excluded.album, length_seconds=excluded.length_seconds";
             if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
             {
@@ -249,6 +263,10 @@ namespace fms
                 sqlite3_bind_text(stmt, 5, info.artist.c_str(), -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(stmt, 6, info.album.c_str(), -1, SQLITE_TRANSIENT);
                 sqlite3_bind_double(stmt, 7, info.length_seconds);
+                // playcount: 1 if played_seconds = 0, else 0
+                sqlite3_bind_int(stmt, 8, (info.length_seconds == 0.0) ? 1 : 0);
+                // total_time_seconds: actual played seconds
+                sqlite3_bind_double(stmt, 9, info.length_seconds);
                 sqlite3_step(stmt);
                 sqlite3_finalize(stmt);
             }
@@ -264,7 +282,7 @@ namespace fms
         // Current month data
         sqlite3_stmt *stmt = nullptr;
         const char *sql =
-            "SELECT c.ym, c.track_crc, c.path, c.title, c.artist, c.album, c.length_seconds, c.playcount,"
+            "SELECT c.ym, c.track_crc, c.path, c.title, c.artist, c.album, c.length_seconds, c.playcount, c.total_time_seconds,"
             "       COALESCE(p.playcount, 0) AS prev_pc"
             " FROM monthly_count c"
             " LEFT JOIN monthly_count p"
@@ -299,7 +317,8 @@ namespace fms
                 e.album = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
                 e.length_seconds = sqlite3_column_double(stmt, 6);
                 e.playcount = sqlite3_column_int64(stmt, 7);
-                e.prev_playcount = sqlite3_column_int64(stmt, 8);
+                e.total_time_seconds = sqlite3_column_double(stmt, 8);
+                e.prev_playcount = sqlite3_column_int64(stmt, 9);
                 result.push_back(std::move(e));
             }
             sqlite3_finalize(stmt);
@@ -316,8 +335,9 @@ namespace fms
         sqlite3_stmt *stmt = nullptr;
         const char *sql =
             "SELECT c.track_crc, c.path, c.title, c.artist, c.album,"
-            "       SUM(c.playcount * c.length_seconds) / SUM(c.playcount) AS avg_length,"
+            "       SUM(c.total_time_seconds) / SUM(c.playcount) AS avg_length,"
             "       SUM(c.playcount) AS total_plays,"
+            "       SUM(c.total_time_seconds) AS total_time,"
             "       COALESCE(SUM(p.playcount), 0) AS prev_total"
             " FROM monthly_count c"
             " LEFT JOIN monthly_count p"
@@ -344,7 +364,8 @@ namespace fms
                 e.album = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4));
                 e.length_seconds = sqlite3_column_double(stmt, 5);
                 e.playcount = sqlite3_column_int64(stmt, 6);
-                e.prev_playcount = sqlite3_column_int64(stmt, 7);
+                e.total_time_seconds = sqlite3_column_double(stmt, 7);
+                e.prev_playcount = sqlite3_column_int64(stmt, 8);
                 result.push_back(std::move(e));
             }
             sqlite3_finalize(stmt);

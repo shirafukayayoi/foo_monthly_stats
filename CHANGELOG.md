@@ -1,5 +1,65 @@
 # Release Notes
 
+## v1.2.1 - 2026-02-25
+
+### 🐛 Bug Fixes
+
+- **Fixed duplicate play count recording**: Play count and listening time are now correctly separated
+  - `on_item_played`: Records play count only (played_seconds = 0)
+  - `on_playback_stop`: Records actual playback time (played_seconds > 0)
+  - Added `total_time_seconds` column to `monthly_count` table
+  - Fixed issue where each play was counted twice due to both callbacks recording
+
+### ✨ Enhancements
+
+- **Improved time tracking accuracy**: Now tracks actual played time instead of full track length
+  - Partial plays (stopped before completion) are now recorded with accurate duration
+  - Loop playback iterations correctly accumulate actual playback time
+  - Example: 80 seconds played = 80 seconds recorded (not the full track length)
+
+- **Enhanced display precision**: Total listening time now shows seconds
+  - Previous format: `1h 13m`
+  - New format: `1h 13m 25s`
+
+### 📝 Technical Notes
+
+- Database schema update: Added `total_time_seconds` column (automatically migrated)
+- `on_item_played` records playback events for play count (60-second rule)
+- `on_playback_stop` records actual playback duration for listening time
+- Aggregation queries updated to use `total_time_seconds` for accurate time calculation
+
+---
+
+## v1.2.1 - 2026-02-25（日本語）
+
+### 🐛 バグ修正
+
+- **重複する再生回数記録の修正**: 再生回数と再生時間を正しく分離
+  - `on_item_played`: 再生回数のみ記録（played_seconds = 0）
+  - `on_playback_stop`: 実際の再生時間を記録（played_seconds > 0）
+  - `monthly_count`テーブルに`total_time_seconds`カラムを追加
+  - 両方のコールバックが記録していたため、再生回数が2倍になっていた問題を修正
+
+### ✨ 機能強化
+
+- **再生時間トラッキングの精度向上**: トラック全体の長さではなく、実際に再生した時間を記録
+  - 途中で停止した再生も正確な時間で記録されます
+  - ループ再生の各イテレーションで実際の再生時間が正しく累積されます
+  - 例：80秒再生 = 80秒記録（トラック全体の長さではなく）
+
+- **表示精度の向上**: 総再生時間に秒数を表示
+  - 以前のフォーマット：`1h 13m`
+  - 新しいフォーマット：`1h 13m 25s`
+
+### 📝 技術的な注記
+
+- データベーススキーマ更新：`total_time_seconds`カラムを追加（自動マイグレーション）
+- `on_item_played`は再生イベントを記録（60秒ルール適用）
+- `on_playback_stop`は実際の再生時間を記録
+- 集計クエリを更新し、正確な時間計算のため`total_time_seconds`を使用
+
+---
+
 ## v1.2.0 - 2026-02-25
 
 ### 🔄 Breaking Changes

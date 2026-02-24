@@ -31,7 +31,8 @@ namespace fms
         std::string album;
         double length_seconds; // track length in seconds
         int64_t playcount;
-        int64_t prev_playcount; // same month previous year (for delta)
+        int64_t prev_playcount;    // same month previous year (for delta)
+        double total_time_seconds; // actual total played time
     };
 
     // -----------------------------------------------------------------------

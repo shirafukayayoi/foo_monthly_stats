@@ -261,13 +261,14 @@ namespace fms
         double totalSeconds = 0.0;
         for (const auto &e : m_entries)
         {
-            totalSeconds += e.length_seconds * e.playcount;
+            totalSeconds += e.total_time_seconds;
         }
         int hours = static_cast<int>(totalSeconds / 3600);
         int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+        int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
 
         std::string exportMsg = "Export succeeded. (" + std::to_string(m_entries.size()) +
-                                " tracks, " + std::to_string(hours) + "h " + std::to_string(minutes) + "m)";
+                                " tracks, " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s)";
         SetStatus(exportMsg.c_str());
     }
 
@@ -406,13 +407,14 @@ namespace fms
         double totalSeconds = 0.0;
         for (const auto &e : m_entries)
         {
-            totalSeconds += e.length_seconds * e.playcount;
+            totalSeconds += e.total_time_seconds;
         }
         int hours = static_cast<int>(totalSeconds / 3600);
         int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+        int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
 
         std::string statusText = "Tracks: " + std::to_string(m_entries.size()) +
-                                 " | Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+                                 " | Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
         SetStatus(statusText.c_str());
     }
 
