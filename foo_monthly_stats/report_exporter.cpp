@@ -100,69 +100,240 @@ namespace fms
         }
         head.append_child("title").text().set(("Monthly Stats – " + ym).c_str());
 
-        // Bootstrap 5 CDN
+        // Google Fonts (Inter)
+        {
+            auto link = head.append_child("link");
+            link.append_attribute("rel") = "preconnect";
+            link.append_attribute("href") = "https://fonts.googleapis.com";
+        }
+        {
+            auto link = head.append_child("link");
+            link.append_attribute("rel") = "preconnect";
+            link.append_attribute("href") = "https://fonts.gstatic.com";
+            link.append_attribute("crossorigin") = "";
+        }
         {
             auto link = head.append_child("link");
             link.append_attribute("rel") = "stylesheet";
             link.append_attribute("href") =
-                "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css";
+                "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
         }
+
+        // Embedded CSS
+        auto style = head.append_child("style");
+        style.text().set(R"CSS(
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 3rem 2rem;
+    color: #1a1a1a;
+}
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+.card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    position: relative;
+}
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+}
+.art-container {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    overflow: hidden;
+}
+.art-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.card:hover .art-img {
+    transform: scale(1.05);
+}
+.rank-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    backdrop-filter: blur(8px);
+    z-index: 1;
+}
+.info {
+    padding: 1.25rem;
+}
+.title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.artist {
+    font-size: 0.9375rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.album {
+    font-size: 0.875rem;
+    color: #999;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #eee;
+}
+.plays {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #667eea;
+}
+.delta {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+}
+.delta.positive {
+    background: #d4edda;
+    color: #155724;
+}
+.delta.negative {
+    background: #f8d7da;
+    color: #721c24;
+}
+@media (max-width: 768px) {
+    body { padding: 1.5rem 1rem; }
+    h1 { font-size: 2rem; margin-bottom: 1.5rem; }
+    .grid { grid-template-columns: 1fr; }
+}
+)CSS");
 
         // <body>
         auto body = html.append_child("body");
         auto container = body.append_child("div");
-        container.append_attribute("class") = "container py-4";
+        container.append_attribute("class") = "container";
 
         // Title
         {
             auto h1 = container.append_child("h1");
-            h1.append_attribute("class") = "mb-4";
             h1.text().set(("Monthly Stats – " + ym).c_str());
         }
 
-        // Table
-        auto table = container.append_child("table");
-        table.append_attribute("class") = "table table-striped table-hover align-middle";
+        // Grid
+        auto grid = container.append_child("div");
+        grid.append_attribute("class") = "grid";
 
-        // thead
-        auto thead = table.append_child("thead");
-        auto hrow = thead.append_child("tr");
-        const char *colNames[] = {"Art", "#", "Title", "Artist", "Album", "Plays", "\xce\x94"};
-        for (const char *col : colNames)
-        {
-            auto th = hrow.append_child("th");
-            th.text().set(col);
-        }
-
-        // tbody
-        auto tbody = table.append_child("tbody");
         int rank = 1;
         for (const auto &e : entries)
         {
-            auto tr = tbody.append_child("tr");
+            // Card
+            auto card = grid.append_child("div");
+            card.append_attribute("class") = "card";
 
-            // Album art cell
-            auto artTd = tr.append_child("td");
+            // Art container
+            auto artContainer = card.append_child("div");
+            artContainer.append_attribute("class") = "art-container";
+
+            // Album art image
             auto it = artMap.find(e.track_crc);
             if (it != artMap.end())
             {
-                auto img = artTd.append_child("img");
+                auto img = artContainer.append_child("img");
+                img.append_attribute("class") = "art-img";
                 img.append_attribute("src") = it->second.c_str();
-                img.append_attribute("style") = "width:60px;height:60px;object-fit:cover;border-radius:4px;";
+                img.append_attribute("alt") = e.album.c_str();
                 img.append_attribute("loading") = "lazy";
             }
 
-            tr.append_child("td").text().set(std::to_string(rank++).c_str());
-            tr.append_child("td").text().set(e.title.c_str());
-            tr.append_child("td").text().set(e.artist.c_str());
-            tr.append_child("td").text().set(e.album.c_str());
-            tr.append_child("td").text().set(std::to_string(e.playcount).c_str());
+            // Rank badge
+            auto badge = artContainer.append_child("div");
+            badge.append_attribute("class") = "rank-badge";
+            badge.text().set(std::to_string(rank++).c_str());
 
+            // Info section
+            auto info = card.append_child("div");
+            info.append_attribute("class") = "info";
+
+            // Title
+            auto title = info.append_child("div");
+            title.append_attribute("class") = "title";
+            title.text().set(e.title.c_str());
+
+            // Artist
+            auto artist = info.append_child("div");
+            artist.append_attribute("class") = "artist";
+            artist.text().set(e.artist.c_str());
+
+            // Album
+            auto album = info.append_child("div");
+            album.append_attribute("class") = "album";
+            album.text().set(e.album.c_str());
+
+            // Stats section
+            auto stats = info.append_child("div");
+            stats.append_attribute("class") = "stats";
+
+            // Plays
+            auto plays = stats.append_child("div");
+            plays.append_attribute("class") = "plays";
+            std::string playsText = "\xe2\x96\xb6 " + std::to_string(e.playcount) + " plays";
+            plays.text().set(playsText.c_str());
+
+            // Delta
             int64_t delta = e.playcount - e.prev_playcount;
             std::string deltaStr = (delta >= 0 ? "+" : "") + std::to_string(delta);
-            auto td = tr.append_child("td");
-            td.text().set(deltaStr.c_str());
-            td.append_attribute("class") = (delta >= 0) ? "text-success" : "text-danger";
+            auto deltaDiv = stats.append_child("div");
+            std::string deltaClass = delta >= 0 ? "delta positive" : "delta negative";
+            deltaDiv.append_attribute("class") = deltaClass.c_str();
+            deltaDiv.text().set(deltaStr.c_str());
         }
 
         // Save via pugixml's save_file
