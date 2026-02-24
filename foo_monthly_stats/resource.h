@@ -1,0 +1,35 @@
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ generated include file.
+// Used by foo_monthly_stats.rc
+
+#define IDD_DASHBOARD 101
+#define IDD_PREFERENCES 102
+
+// Dashboard controls
+#define IDC_COMBO_MONTH 1001
+#define IDC_BTN_PREV 1002
+#define IDC_BTN_NEXT 1003
+#define IDC_BTN_REFRESH 1004
+#define IDC_LIST_TRACKS 1005
+#define IDC_BTN_EXPORT 1006
+#define IDC_BTN_PREFERENCES 1007
+#define IDC_STATIC_STATUS 1008
+
+// Preferences controls
+#define IDC_EDIT_DB_PATH 2001
+#define IDC_BTN_BROWSE_DB 2002
+#define IDC_COMBO_ART_SIZE 2003
+#define IDC_CHECK_AUTO_REPORT 2004
+#define IDC_EDIT_CHROME_PATH 2005
+#define IDC_BTN_BROWSE_CHROME 2006
+#define IDC_STATIC_DB_PATH_LABEL 2007
+#define IDC_STATIC_ART_SIZE_LABEL 2008
+#define IDC_STATIC_CHROME_LABEL 2009
+
+// Next default values for new objects
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE 103
+#define _APS_NEXT_COMMAND_VALUE 40001
+#define _APS_NEXT_CONTROL_VALUE 2010
+#define _APS_NEXT_SYMED_VALUE 101
+#endif

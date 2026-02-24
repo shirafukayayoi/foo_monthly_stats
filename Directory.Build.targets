@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Directory.Build.targets  –  fb2k workspace root
+  Loaded AFTER each .vcxproj file by MSBuild.
+  This ensures we can APPEND to AdditionalIncludeDirectories even if the
+  vcxproj sets it without %(AdditionalIncludeDirectories) inheritance.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <_AtlMsvcVer Condition="'$(_AtlMsvcVer)'==''">14.50.35717</_AtlMsvcVer>
+    <_AtlRoot>C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\$(_AtlMsvcVer)\atlmfc</_AtlRoot>
+    <_WtlRoot>$(MSBuildThisFileDirectory)third_party\wtl\Include</_WtlRoot>
+  </PropertyGroup>
+
+  <!--
+    Append ATL + WTL include dirs AFTER the vcxproj has set its own includes.
+    %(AdditionalIncludeDirectories) now refers to what the vcxproj already set.
+  -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(_AtlRoot)\include;$(_WtlRoot);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- Interpret source files as UTF-8 (fixes non-ASCII chars in string literals) -->
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(_AtlRoot)\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(_AtlRoot)\lib\$(PlatformTarget);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+
+</Project>

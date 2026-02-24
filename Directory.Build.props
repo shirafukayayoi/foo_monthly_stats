@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Directory.Build.props  –  fb2k workspace root
+  Defines shared properties. Actual include-dir injection is in
+  Directory.Build.targets (runs after .vcxproj, so it can append).
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- MSVC v145 (VS 2026 native) has ATL. Record the version here. -->
+    <_AtlMsvcVer Condition="'$(_AtlMsvcVer)'==''">14.50.35717</_AtlMsvcVer>
+  </PropertyGroup>
+
+</Project>
