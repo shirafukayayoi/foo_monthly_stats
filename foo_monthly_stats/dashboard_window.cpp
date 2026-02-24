@@ -154,6 +154,8 @@ namespace fms
 
     void DashboardWindow::OnRefresh(UINT, int, CWindow)
     {
+        // Recalculate this period from play_log
+        DbManager::get().refreshPeriod(m_period, m_viewMode == YEAR);
         Populate();
     }
 

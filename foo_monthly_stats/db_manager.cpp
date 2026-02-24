@@ -101,6 +101,47 @@ namespace fms
         m_cv.notify_one();
     }
 
+    void DbManager::refreshPeriod(const std::string &period, bool isYear)
+    {
+        if (!m_db)
+            return;
+
+        // 1. Delete existing monthly_count entries for this period
+        {
+            sqlite3_stmt *stmt = nullptr;
+            const char *sql = isYear
+                                  ? "DELETE FROM monthly_count WHERE ym LIKE ?"
+                                  : "DELETE FROM monthly_count WHERE ym = ?";
+            if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                std::string pattern = isYear ? (period + "-%") : period;
+                sqlite3_bind_text(stmt, 1, pattern.c_str(), -1, SQLITE_TRANSIENT);
+                sqlite3_step(stmt);
+                sqlite3_finalize(stmt);
+            }
+        }
+
+        // 2. Recalculate from play_log
+        {
+            sqlite3_stmt *stmt = nullptr;
+            const char *sql =
+                "INSERT INTO monthly_count(ym, track_crc, path, title, artist, album, length_seconds, playcount)"
+                " SELECT strftime('%Y-%m', datetime(played_at/1000, 'unixepoch', 'localtime')) AS ym,"
+                "        track_crc, path, title, artist, album, length_seconds, COUNT(*) AS playcount"
+                " FROM play_log"
+                " WHERE ym LIKE ?"
+                " GROUP BY ym, track_crc, path, title, artist, album, length_seconds";
+
+            if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                std::string pattern = isYear ? (period + "-%") : period;
+                sqlite3_bind_text(stmt, 1, pattern.c_str(), -1, SQLITE_TRANSIENT);
+                sqlite3_step(stmt);
+                sqlite3_finalize(stmt);
+            }
+        }
+    }
+
     void DbManager::workerThread()
     {
         while (true)

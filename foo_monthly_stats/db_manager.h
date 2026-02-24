@@ -54,6 +54,10 @@ namespace fms
         // Post a play event (non-blocking, returns immediately)
         void postPlay(const TrackInfo &info);
 
+        // Refresh a specific period by deleting and recalculating from play_log
+        // period: "YYYY-MM" for month or "YYYY" for year
+        void refreshPeriod(const std::string &period, bool isYear);
+
         // Query monthly data synchronously (called on main thread for UI)
         std::vector<MonthlyEntry> queryMonth(const std::string &ym);
 
