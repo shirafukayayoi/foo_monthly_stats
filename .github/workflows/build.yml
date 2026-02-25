@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022  # Use specific version with VS 2022
     
     steps:
     - name: Checkout repository
@@ -17,8 +17,11 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
+    - name: Setup MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+        vsversion: 2022
     
     - name: Build foo_monthly_stats
       working-directory: foo_monthly_stats
