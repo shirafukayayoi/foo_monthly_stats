@@ -29,8 +29,51 @@ namespace fms
     metadb_handle_ptr PlaybackTimeTracker::s_current_track;
     double PlaybackTimeTracker::s_last_playback_time = 0.0;
 
+    // Helper function to record track playback time
+    static void record_playback_time(metadb_handle_ptr track, double played_seconds, const char *source)
+    {
+        if (!track.is_valid() || played_seconds < 1.0)
+            return;
+
+        file_info_impl fi;
+        if (!track->get_info(fi))
+            return;
+
+        const char *path = track->get_path();
+        uint64_t crcVal = crc64(path, strlen(path));
+        char crcHex[17];
+        snprintf(crcHex, sizeof(crcHex), "%016llx", (unsigned long long)crcVal);
+
+        TrackInfo ti;
+        ti.track_crc = crcHex;
+        ti.path = path;
+        ti.title = fi.meta_get("TITLE", 0) ? fi.meta_get("TITLE", 0) : "";
+        ti.artist = fi.meta_get("ARTIST", 0) ? fi.meta_get("ARTIST", 0) : "";
+        ti.album = fi.meta_get("ALBUM", 0) ? fi.meta_get("ALBUM", 0) : "";
+        ti.length_seconds = played_seconds;
+
+        FILETIME ft;
+        GetSystemTimeAsFileTime(&ft);
+        ULARGE_INTEGER ul;
+        ul.LowPart = ft.dwLowDateTime;
+        ul.HighPart = ft.dwHighDateTime;
+        ti.played_at = static_cast<int64_t>((ul.QuadPart / 10000ULL) - 11644473600000ULL);
+
+        console::formatter() << "[foo_monthly_stats] " << source << ": recording "
+                             << ti.title.c_str() << " (" << played_seconds << "s)";
+
+        DbManager::get().postPlay(ti);
+    }
+
     void PlaybackTimeTracker::on_playback_new_track(metadb_handle_ptr track)
     {
+        // Record previous track's playback time before switching
+        if (s_current_track.is_valid() && s_last_playback_time >= 1.0)
+        {
+            record_playback_time(s_current_track, s_last_playback_time, "on_playback_new_track");
+        }
+
+        // Switch to new track
         s_current_track = track;
         s_last_playback_time = 0.0;
     }
@@ -42,46 +85,19 @@ namespace fms
 
     void PlaybackTimeTracker::on_playback_stop(play_control::t_stop_reason reason)
     {
-        if (!s_current_track.is_valid())
-            return;
-
-        // Record played time if >= 1 second
-        if (s_last_playback_time >= 1.0)
+        // When starting another track, don't record or clear state yet
+        // Let on_playback_new_track handle recording and state change
+        if (reason != play_control::stop_reason_starting_another)
         {
-            // Get track info and record
-            file_info_impl fi;
-            if (!s_current_track->get_info(fi))
-                return;
+            // Record on complete stop (user stop, EOF without next track, shutdown)
+            record_playback_time(s_current_track, s_last_playback_time, "on_playback_stop");
 
-            const char *path = s_current_track->get_path();
-            uint64_t crcVal = crc64(path, strlen(path));
-            char crcHex[17];
-            snprintf(crcHex, sizeof(crcHex), "%016llx", (unsigned long long)crcVal);
-
-            TrackInfo ti;
-            ti.track_crc = crcHex;
-            ti.path = path;
-            ti.title = fi.meta_get("TITLE", 0) ? fi.meta_get("TITLE", 0) : "";
-            ti.artist = fi.meta_get("ARTIST", 0) ? fi.meta_get("ARTIST", 0) : "";
-            ti.album = fi.meta_get("ALBUM", 0) ? fi.meta_get("ALBUM", 0) : "";
-            ti.length_seconds = s_last_playback_time;
-
-            FILETIME ft;
-            GetSystemTimeAsFileTime(&ft);
-            ULARGE_INTEGER ul;
-            ul.LowPart = ft.dwLowDateTime;
-            ul.HighPart = ft.dwHighDateTime;
-            ti.played_at = static_cast<int64_t>((ul.QuadPart / 10000ULL) - 11644473600000ULL);
-
-            console::formatter() << "[foo_monthly_stats] on_playback_stop: recording "
-                                 << ti.title.c_str() << " (" << s_last_playback_time << "s)";
-
-            DbManager::get().postPlay(ti);
+            // Clear state only when not transitioning to another track
+            s_current_track.release();
+            s_last_playback_time = 0.0;
         }
-
-        // Clear state
-        s_current_track.release();
-        s_last_playback_time = 0.0;
+        // Note: When reason == stop_reason_starting_another, state is preserved
+        // for on_playback_new_track to record the time before switching tracks
     }
 
     double PlaybackTimeTracker::get_played_time(metadb_handle_ptr track)
