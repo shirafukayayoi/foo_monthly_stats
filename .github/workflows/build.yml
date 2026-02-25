@@ -2,42 +2,42 @@ name: Build foo_monthly_stats
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:  # Allows manual trigger
+    branches: [main, master]
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   build:
-    runs-on: windows-2022  # Use specific version with VS 2022
-    
+    runs-on: windows-2022 # Use specific version with VS 2022
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    
-    - name: Setup MSVC Developer Command Prompt
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
-        vsversion: 2022
-    
-    - name: Build foo_monthly_stats
-      working-directory: foo_monthly_stats
-      run: |
-        msbuild foo_monthly_stats.vcxproj /p:Configuration=Release /p:Platform=x64 /nologo /v:minimal
-    
-    - name: Upload component package
-      uses: actions/upload-artifact@v4
-      with:
-        name: foo_monthly_stats-component
-        path: foo_monthly_stats/_result/foo_monthly_stats.fb2k-component
-        if-no-files-found: error
-    
-    - name: Upload DLL
-      uses: actions/upload-artifact@v4
-      with:
-        name: foo_monthly_stats-dll
-        path: foo_monthly_stats/_result/x64_Release/bin/foo_monthly_stats.dll
-        if-no-files-found: error
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          vsversion: 2022
+
+      - name: Build foo_monthly_stats
+        working-directory: foo_monthly_stats
+        run: |
+          msbuild foo_monthly_stats.vcxproj /p:Configuration=Release /p:Platform=x64 /nologo /v:minimal
+
+      - name: Upload component package
+        uses: actions/upload-artifact@v4
+        with:
+          name: foo_monthly_stats-component
+          path: foo_monthly_stats/_result/foo_monthly_stats.fb2k-component
+          if-no-files-found: error
+
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: foo_monthly_stats-dll
+          path: foo_monthly_stats/_result/x64_Release/bin/foo_monthly_stats.dll
+          if-no-files-found: error
