@@ -1,5 +1,7 @@
 # foo_monthly_stats
 
+[![Build Status](https://github.com/shirafukayayoi/foo_monthly_stats/actions/workflows/build.yml/badge.svg)](https://github.com/shirafukayayoi/foo_monthly_stats/actions)
+
 A foobar2000 component that tracks and visualizes your music listening statistics on a monthly and yearly basis.
 
 <!-- TODO: Add actual screenshot here. Replace the placeholder URL below with a real image -->
@@ -26,19 +28,24 @@ For now, using placeholder:
 
 ### Option 1: Install Pre-built Component
 
-1. Download the latest `.fb2k-component` file from the [Releases](../../releases) page
-2. Open foobar2000
-3. Go to **File → Preferences → Components → Install...**
-4. Select the downloaded `.fb2k-component` file
-5. Restart foobar2000
+1. Download the latest `.fb2k-component` file:
+   - **Stable releases**: [Releases](../../releases) page
+   - **Latest builds**: [Actions](../../actions) tab → Select latest workflow → Download from Artifacts section (note: files are in zip format)
+2. If downloaded from Actions, extract the zip file to get the `.fb2k-component` file
+3. Open foobar2000
+4. Go to **File → Preferences → Components → Install...**
+5. Select the `.fb2k-component` file
+6. Restart foobar2000
 
 ### Option 2: Build from Source
 
 See [BUILD.md](BUILD.md) for detailed build instructions.
 
-Requirements:
+**Note**: This project uses GitHub Actions for automated builds. You can get pre-built binaries from the Actions tab without setting up a local build environment.
 
-- Visual Studio 2022 or later
+Local build requirements:
+
+- Visual Studio 2022 or later (with C++ desktop development and ATL/MFC components)
 - Windows 10/11
 - foobar2000 SDK (included in repository)
 
