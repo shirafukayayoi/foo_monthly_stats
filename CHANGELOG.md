@@ -1,5 +1,39 @@
 # Release Notes
 
+## v1.3.1 - 2026-02-26
+
+### 🐛 Bug Fixes
+
+- **Fixed playback time not being recorded during continuous playlist playback**: Resolved issue where track playback duration was lost when automatically advancing to the next track
+  - Fixed `on_playback_stop` clearing state prematurely when `stop_reason_starting_another` was triggered
+  - `on_playback_new_track` now correctly records the previous track's playback time before switching
+  - Ensures all tracks in continuous playback have their actual listening time recorded
+
+### 📝 Technical Notes
+
+- Modified `PlaybackTimeTracker::on_playback_stop` to preserve state when transitioning to another track
+- State is only cleared on complete stop (user stop, EOF without next track, or shutdown)
+- Fixed race condition where `on_playback_stop` was called before `on_playback_new_track`
+
+---
+
+## v1.3.1 - 2026-02-26（日本語）
+
+### 🐛 バグ修正
+
+- **プレイリスト連続再生時に再生時間が記録されない問題を修正**: 次の曲に自動的に移行する際にトラックの再生時間が失われる問題を解決
+  - `stop_reason_starting_another`がトリガーされた時に`on_playback_stop`が状態を早期にクリアしていた問題を修正
+  - `on_playback_new_track`が曲を切り替える前に前の曲の再生時間を正しく記録するようになりました
+  - 連続再生中のすべての曲で実際のリスニング時間が記録されるようになりました
+
+### 📝 技術的な注記
+
+- 次の曲に遷移する際に状態を保持するよう`PlaybackTimeTracker::on_playback_stop`を修正
+- 状態は完全停止時（ユーザー停止、次の曲なしのEOF、またはシャットダウン）のみクリアされます
+- `on_playback_stop`が`on_playback_new_track`より前に呼ばれる競合状態を修正
+
+---
+
 ## v1.3.0 - 2026-02-26
 
 ### ✨ New Features
