@@ -11,6 +11,10 @@
     <_AtlMsvcVer Condition="'$(_AtlMsvcVer)'==''">14.50.35717</_AtlMsvcVer>
     <_AtlRoot>C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\$(_AtlMsvcVer)\atlmfc</_AtlRoot>
     <_WtlRoot>$(MSBuildThisFileDirectory)third_party\wtl\Include</_WtlRoot>
+    
+    <!-- Override PlatformToolset to v143 for GitHub Actions compatibility -->
+    <!-- This runs AFTER the project file loads, so it overrides project-level v145 settings -->
+    <PlatformToolset Condition="'$(GITHUB_ACTIONS)'=='true'">v143</PlatformToolset>
   </PropertyGroup>
 
   <!--

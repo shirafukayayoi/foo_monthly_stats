@@ -9,10 +9,6 @@
   <PropertyGroup>
     <!-- MSVC v145 (VS 2026 native) has ATL. Record the version here. -->
     <_AtlMsvcVer Condition="'$(_AtlMsvcVer)'==''">14.50.35717</_AtlMsvcVer>
-    
-    <!-- Use v143 (VS 2022) toolset for GitHub Actions compatibility -->
-    <!-- Can be overridden by individual projects if needed -->
-    <PlatformToolset Condition="'$(PlatformToolset)'==''">v143</PlatformToolset>
   </PropertyGroup>
 
 </Project>
