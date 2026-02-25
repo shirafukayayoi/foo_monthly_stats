@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.2.2 - 2026-02-25
+
+### 🐛 Bug Fixes
+
+- **Fixed HTML export not reflecting actual playback time**: HTML reports now display accurate listening time using `total_time_seconds`
+
+---
+
+## v1.2.2 - 2026-02-25（日本語）
+
+### 🐛 バグ修正
+
+- **HTMLエクスポートで実際の再生時間が反映されない問題を修正**: HTMLレポートが`total_time_seconds`を使用して正確な再生時間を表示するようになりました
+
+---
+
 ## v1.2.1 - 2026-02-25
 
 ### 🐛 Bug Fixes

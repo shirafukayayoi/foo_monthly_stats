@@ -478,16 +478,17 @@ window.addEventListener('load', function() {
             double totalSeconds = 0.0;
             for (const auto &e : entries)
             {
-                totalSeconds += e.length_seconds * e.playcount;
+                totalSeconds += e.total_time_seconds;
             }
 
             int hours = static_cast<int>(totalSeconds / 3600);
             int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+            int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
 
             auto stats = container.append_child("div");
             stats.append_attribute("style") = "text-align: center; margin: 1.5rem 0; font-size: 1.1rem; color: rgba(255,255,255,0.9);";
 
-            std::string timeText = "Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+            std::string timeText = "Total Listening Time: " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
             stats.text().set(timeText.c_str());
         }
 
