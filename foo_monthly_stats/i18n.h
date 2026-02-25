@@ -38,6 +38,7 @@ namespace fms
         STR_CHROME_PATH_LABEL,
         STR_BROWSE,
         STR_PREF_PAGE_NAME,
+        STR_REMOVE_SELECTED,
     };
 
     // Load a string from the resource of the running DLL.

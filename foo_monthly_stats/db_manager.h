@@ -59,6 +59,9 @@ namespace fms
         // period: "YYYY-MM" for month or "YYYY" for year
         void refreshPeriod(const std::string &period, bool isYear);
 
+        // Delete a specific entry from monthly_count
+        void deleteEntry(const std::string &ym, const std::string &track_crc);
+
         // Query monthly data synchronously (called on main thread for UI)
         std::vector<MonthlyEntry> queryMonth(const std::string &ym);
 

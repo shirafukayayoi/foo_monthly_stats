@@ -190,6 +190,38 @@ namespace fms
         Populate();
     }
 
+    void DashboardWindow::OnDelete(UINT, int, CWindow)
+    {
+        HWND hList = GetDlgItem(IDC_LIST_TRACKS);
+        if (!hList)
+            return;
+
+        // Collect all selected items
+        std::vector<int> selectedIndices;
+        int idx = -1;
+        while ((idx = ListView_GetNextItem(hList, idx, LVNI_SELECTED)) != -1)
+        {
+            selectedIndices.push_back(idx);
+        }
+
+        if (selectedIndices.empty())
+            return;
+
+        // Delete from database (in reverse order to maintain indices)
+        for (auto it = selectedIndices.rbegin(); it != selectedIndices.rend(); ++it)
+        {
+            int index = *it;
+            if (index >= 0 && index < static_cast<int>(m_entries.size()))
+            {
+                const auto &entry = m_entries[index];
+                DbManager::get().deleteEntry(entry.ym, entry.track_crc);
+            }
+        }
+
+        // Refresh the display
+        Populate();
+    }
+
     void DashboardWindow::OnReset(UINT, int, CWindow)
     {
         // Recalculate this period from play_log

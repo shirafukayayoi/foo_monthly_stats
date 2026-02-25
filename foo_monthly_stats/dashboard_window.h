@@ -36,6 +36,7 @@ namespace fms
         COMMAND_HANDLER_EX(IDC_BTN_MODE_TOGGLE, BN_CLICKED, OnModeToggle)
         COMMAND_HANDLER_EX(IDC_BTN_PREV, BN_CLICKED, OnPrev)
         COMMAND_HANDLER_EX(IDC_BTN_NEXT, BN_CLICKED, OnNext)
+        COMMAND_HANDLER_EX(IDC_BTN_DELETE, BN_CLICKED, OnDelete)
         COMMAND_HANDLER_EX(IDC_BTN_RESET, BN_CLICKED, OnReset)
         COMMAND_HANDLER_EX(IDC_BTN_EXPORT, BN_CLICKED, OnExport)
         COMMAND_HANDLER_EX(IDC_BTN_PREFERENCES, BN_CLICKED, OnPreferences)
@@ -51,6 +52,7 @@ namespace fms
         void OnModeToggle(UINT, int, CWindow);
         void OnPrev(UINT, int, CWindow);
         void OnNext(UINT, int, CWindow);
+        void OnDelete(UINT, int, CWindow);
         void OnReset(UINT, int, CWindow);
         void OnExport(UINT, int, CWindow);
         void OnPreferences(UINT, int, CWindow);

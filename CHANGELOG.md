@@ -1,5 +1,39 @@
 # Release Notes
 
+## v1.3.0 - 2026-02-26
+
+### ✨ New Features
+
+- **Individual entry removal**: Added "Remove Selected" button to delete specific tracks from monthly statistics
+  - Select one or multiple tracks in the list and click "Remove Selected" to remove them from the current period
+  - Only removes from `monthly_count` table (aggregated statistics)
+  - Original playback history in `play_log` remains intact
+  - Removed entries can be restored by clicking "Reset" button (recalculates from play_log)
+
+### 🎨 UI Changes
+
+- Added "Remove Selected" button to the dashboard window (located left of "Reset" button)
+- Button label: "Remove Selected" (English) / "選択項目を除去" (Japanese)
+
+---
+
+## v1.3.0 - 2026-02-26（日本語）
+
+### ✨ 新機能
+
+- **個別エントリーの削除機能**: 月次統計から特定の曲を削除できる「選択項目を除去」ボタンを追加
+  - リストで１曲または複数曲を選択し、「選択項目を除去」をクリックすると現在の期間から削除されます
+  - `monthly_count`テーブル（集計データ）からのみ削除
+  - `play_log`の元の再生履歴はそのまま保持
+  - 削除したエントリーは「更新」ボタンで再集計すると復元できます
+
+### 🎨 UI変更
+
+- ダッシュボードウィンドウに「選択項目を除去」ボタンを追加（「更新」ボタンの左側に配置）
+- ボタンラベル: "Remove Selected" (英語) / "選択項目を除去" (日本語)
+
+---
+
 ## v1.2.2 - 2026-02-25
 
 ### 🐛 Bug Fixes

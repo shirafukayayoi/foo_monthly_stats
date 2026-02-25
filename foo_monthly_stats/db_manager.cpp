@@ -145,6 +145,22 @@ namespace fms
         }
     }
 
+    void DbManager::deleteEntry(const std::string &ym, const std::string &track_crc)
+    {
+        if (!m_db)
+            return;
+
+        sqlite3_stmt *stmt = nullptr;
+        const char *sql = "DELETE FROM monthly_count WHERE ym = ? AND track_crc = ?";
+        if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(stmt, 1, ym.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, 2, track_crc.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+        }
+    }
+
     void DbManager::workerThread()
     {
         while (true)
