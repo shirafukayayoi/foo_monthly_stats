@@ -303,7 +303,7 @@ namespace fms
             " FROM monthly_count c"
             " LEFT JOIN monthly_count p"
             "   ON p.track_crc = c.track_crc AND p.ym = ?"
-            " WHERE c.ym = ?"
+            " WHERE c.ym = ? AND c.playcount > 0"
             " ORDER BY c.playcount DESC";
 
         // Compute previous month YM (for delta)
@@ -358,7 +358,7 @@ namespace fms
             " FROM monthly_count c"
             " LEFT JOIN monthly_count p"
             "   ON p.track_crc = c.track_crc AND p.ym LIKE ?"
-            " WHERE c.ym LIKE ?"
+            " WHERE c.ym LIKE ? AND c.playcount > 0"
             " GROUP BY c.track_crc, c.path, c.title, c.artist, c.album"
             " ORDER BY total_plays DESC";
 

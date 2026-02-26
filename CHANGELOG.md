@@ -1,5 +1,39 @@
 # Release Notes
 
+## v1.3.2 - 2026-02-26
+
+### 🐛 Bug Fixes
+
+- **Fixed zero play count entries appearing in dashboard**: Tracks with only playback time recorded (but no play count yet) are now hidden from display
+  - Added `playcount > 0` filter to `queryMonth` and `queryYear` SQL queries
+  - Only tracks that have been played for at least 60 seconds (or 1/3 of track length) are displayed
+  - Database still stores both play count and playback time separately for statistical accuracy
+
+### 📝 Technical Notes
+
+- Modified `DbManager::queryMonth` to filter out entries where `c.playcount = 0`
+- Modified `DbManager::queryYear` to filter out entries where `c.playcount = 0`
+- Prevents display of temporary entries where playback time was recorded before play count threshold was met
+
+---
+
+## v1.3.2 - 2026-02-26（日本語）
+
+### 🐛 バグ修正
+
+- **再生回数0のエントリーがダッシュボードに表示される問題を修正**: 再生時間のみが記録され、再生回数がまだ記録されていないトラックを非表示にしました
+  - `queryMonth`と`queryYear`のSQLクエリに`playcount > 0`フィルターを追加
+  - 60秒以上（またはトラック長の1/3以上）再生されたトラックのみ表示されます
+  - データベースには統計精度のため、再生回数と再生時間の両方が個別に保存されます
+
+### 📝 技術的な注記
+
+- `DbManager::queryMonth`を修正し、`c.playcount = 0`のエントリーを除外
+- `DbManager::queryYear`を修正し、`c.playcount = 0`のエントリーを除外
+- 再生時間は記録されたが再生回数の閾値に達していない一時的なエントリーの表示を防止
+
+---
+
 ## v1.3.1 - 2026-02-26
 
 ### 🐛 Bug Fixes
