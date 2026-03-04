@@ -34,6 +34,59 @@ namespace fms
     }
 
     // ---------------------------------------------------------------------------
+    // Helper: trim whitespace from C-string
+    // ---------------------------------------------------------------------------
+    static std::string trimString(const char *str)
+    {
+        if (!str)
+            return "";
+        std::string s(str);
+        // Trim leading whitespace
+        size_t start = s.find_first_not_of(" \t\r\n");
+        if (start == std::string::npos)
+            return "";
+        // Trim trailing whitespace
+        size_t end = s.find_last_not_of(" \t\r\n");
+        return s.substr(start, end - start + 1);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Helper: case-insensitive string comparison
+    // ---------------------------------------------------------------------------
+    static bool caseInsensitiveMatch(const std::string &a, const std::string &b)
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i)
+        {
+            if (tolower(static_cast<unsigned char>(a[i])) !=
+                tolower(static_cast<unsigned char>(b[i])))
+                return false;
+        }
+        return true;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Helper: check if file path exists using filesystem
+    // ---------------------------------------------------------------------------
+    static bool filePathExists(const char *path)
+    {
+        try
+        {
+            abort_callback_dummy abort;
+            auto fs = filesystem::get(path);
+            if (fs.is_valid())
+            {
+                return fs->file_exists(path, abort);
+            }
+        }
+        catch (...)
+        {
+        }
+        return false;
+    }
+
+    // ---------------------------------------------------------------------------
     // Album art collection (must be called on main thread)
     // ---------------------------------------------------------------------------
     std::map<std::string, std::string> ReportExporter::collectArt(
@@ -46,71 +99,124 @@ namespace fms
             auto lib = library_manager::get();
             abort_callback_dummy abort;
 
+            // Pre-fetch all library items once for efficiency
+            metadb_handle_list allItems;
+            try
+            {
+                lib->get_all_items(allItems);
+                console::printf("[fms] Album art: loaded %u items from library", (unsigned)allItems.get_count());
+            }
+            catch (const std::exception &ex)
+            {
+                console::printf("[fms] Failed to load library items: %s", ex.what());
+            }
+
             for (const auto &e : entries)
             {
                 metadb_handle_ptr h;
 
-                // If path is available, use it directly
+                // Step 1: Try to create handle from stored path, but verify file exists
                 if (!e.path.empty())
                 {
+                    // Check if path looks like a file:// URL and validate existence
+                    bool pathIsValid = false;
                     try
                     {
-                        h = metadb::get()->handle_create(e.path.c_str(), 0);
+                        // Verify the file actually exists before using this path
+                        if (filePathExists(e.path.c_str()))
+                        {
+                            h = metadb::get()->handle_create(e.path.c_str(), 0);
+                            console::printf("[fms] Using path handle for: %s", e.path.c_str());
+                            pathIsValid = true;
+                        }
+                        else
+                        {
+                            console::printf("[fms] Path file does not exist: %s", e.path.c_str());
+                        }
+                    }
+                    catch (const std::exception &ex)
+                    {
+                        console::printf("[fms] Path validation failed: %s (path: %s)", ex.what(), e.path.c_str());
                     }
                     catch (...)
                     {
-                        console::printf("[fms] Failed to create handle from path: %s", e.path.c_str());
+                        console::printf("[fms] Path validation failed (unknown exception): %s", e.path.c_str());
+                    }
+
+                    if (!pathIsValid)
+                    {
+                        h = nullptr;
                     }
                 }
 
-                // If no path or handle creation failed, search library by metadata
+                // Step 2: If path failed or file doesn't exist, search library by metadata
                 if (!h.is_valid())
                 {
-                    console::printf("[fms] Searching library for: %s - %s - %s",
+                    console::printf("[fms] Searching library for: '%s' - '%s' - '%s'",
                                     e.title.c_str(), e.artist.c_str(), e.album.c_str());
 
-                    try
-                    {
-                        metadb_handle_list allItems;
-                        lib->get_all_items(allItems);
+                    std::string searchTitle = trimString(e.title.c_str());
+                    std::string searchArtist = trimString(e.artist.c_str());
+                    std::string searchAlbum = trimString(e.album.c_str());
 
-                        // Search for matching track
+                    // First pass: exact match with trimmed strings
+                    for (t_size i = 0; i < allItems.get_count(); ++i)
+                    {
+                        metadb_handle_ptr item = allItems[i];
+                        file_info_impl fi;
+                        if (!item->get_info(fi))
+                            continue;
+
+                        std::string itemTitle = trimString(fi.meta_get("TITLE", 0));
+                        std::string itemArtist = trimString(fi.meta_get("ARTIST", 0));
+                        std::string itemAlbum = trimString(fi.meta_get("ALBUM", 0));
+
+                        if (itemTitle == searchTitle &&
+                            itemArtist == searchArtist &&
+                            itemAlbum == searchAlbum)
+                        {
+                            h = item;
+                            console::printf("[fms] Found exact match in library: %s", item->get_path());
+                            break;
+                        }
+                    }
+
+                    // Second pass: case-insensitive match if exact match failed
+                    if (!h.is_valid())
+                    {
                         for (t_size i = 0; i < allItems.get_count(); ++i)
                         {
                             metadb_handle_ptr item = allItems[i];
                             file_info_impl fi;
-                            if (item->get_info(fi))
-                            {
-                                const char *title = fi.meta_get("TITLE", 0);
-                                const char *artist = fi.meta_get("ARTIST", 0);
-                                const char *album = fi.meta_get("ALBUM", 0);
+                            if (!item->get_info(fi))
+                                continue;
 
-                                if (title && artist && album &&
-                                    e.title == title &&
-                                    e.artist == artist &&
-                                    e.album == album)
-                                {
-                                    h = item;
-                                    console::printf("[fms] Found in library: %s", item->get_path());
-                                    break;
-                                }
+                            std::string itemTitle = trimString(fi.meta_get("TITLE", 0));
+                            std::string itemArtist = trimString(fi.meta_get("ARTIST", 0));
+                            std::string itemAlbum = trimString(fi.meta_get("ALBUM", 0));
+
+                            if (caseInsensitiveMatch(itemTitle, searchTitle) &&
+                                caseInsensitiveMatch(itemArtist, searchArtist) &&
+                                caseInsensitiveMatch(itemAlbum, searchAlbum))
+                            {
+                                h = item;
+                                console::printf("[fms] Found case-insensitive match in library: %s", item->get_path());
+                                break;
                             }
                         }
-
-                        if (!h.is_valid())
-                        {
-                            console::printf("[fms] Track not found in library");
-                            continue;
-                        }
                     }
-                    catch (...)
+
+                    if (!h.is_valid())
                     {
-                        console::printf("[fms] Exception searching library");
+                        console::printf("[fms] Track not found in library after metadata search");
                         continue;
                     }
                 }
 
-                // Now we have a valid handle, try to get album art
+                // Step 3: Now we have a valid handle, try to get album art
+                bool artObtained = false;
+                std::string failureReason;
+
                 try
                 {
                     metadb_handle_list handles;
@@ -128,24 +234,87 @@ namespace fms
                                                   base64_encode(data->get_ptr(), data->get_size());
                             artMap[e.track_crc] = dataUri;
                             console::printf("[fms] Got album art for: %s (%u bytes)", e.title.c_str(), (unsigned)data->get_size());
+                            artObtained = true;
                         }
                         else
                         {
+                            failureReason = "No album art data";
                             console::printf("[fms] No album art data for: %s", e.title.c_str());
                         }
                     }
                     else
                     {
+                        failureReason = "Failed to open album art instance";
                         console::printf("[fms] Failed to open album art instance for: %s", e.title.c_str());
                     }
                 }
                 catch (const std::exception &ex)
                 {
+                    failureReason = ex.what();
                     console::printf("[fms] Exception getting art for %s: %s", e.title.c_str(), ex.what());
                 }
                 catch (...)
                 {
+                    failureReason = "Unknown exception";
                     console::printf("[fms] Unknown exception getting art for: %s", e.title.c_str());
+                }
+
+                // Step 4: If art not obtained, try fallback search for alternative versions of the same track
+                if (!artObtained && !e.title.empty() && !e.artist.empty())
+                {
+                    console::printf("[fms] Attempting fallback search for alternative versions: '%s' by '%s'",
+                                    e.title.c_str(), e.artist.c_str());
+
+                    std::string searchTitle = trimString(e.title.c_str());
+                    std::string searchArtist = trimString(e.artist.c_str());
+
+                    // Search for alternative tracks with same title and artist (possibly different album)
+                    for (t_size i = 0; i < allItems.get_count() && !artObtained; ++i)
+                    {
+                        metadb_handle_ptr altItem = allItems[i];
+                        file_info_impl fi;
+                        if (!altItem->get_info(fi))
+                            continue;
+
+                        std::string itemTitle = trimString(fi.meta_get("TITLE", 0));
+                        std::string itemArtist = trimString(fi.meta_get("ARTIST", 0));
+
+                        // Match on title and artist only, ignore album
+                        if (itemTitle == searchTitle && itemArtist == searchArtist)
+                        {
+                            try
+                            {
+                                metadb_handle_list handles;
+                                handles.add_item(altItem);
+                                pfc::list_single_ref_t<GUID> types(album_art_ids::cover_front);
+                                auto inst = aam->open(handles, types, abort);
+
+                                if (inst.is_valid())
+                                {
+                                    album_art_data_ptr data = inst->query(album_art_ids::cover_front, abort);
+                                    if (data.is_valid() && data->get_size() > 0)
+                                    {
+                                        // Got album art from alternative track
+                                        std::string dataUri = "data:image/jpeg;base64," +
+                                                              base64_encode(data->get_ptr(), data->get_size());
+                                        artMap[e.track_crc] = dataUri;
+                                        console::printf("[fms] Got album art from fallback (alt album): %s (%u bytes)",
+                                                        e.title.c_str(), (unsigned)data->get_size());
+                                        artObtained = true;
+                                    }
+                                }
+                            }
+                            catch (...)
+                            {
+                                // Ignore errors and continue searching
+                            }
+                        }
+                    }
+
+                    if (!artObtained)
+                    {
+                        console::printf("[fms] Fallback search failed to find album art for: %s", e.title.c_str());
+                    }
                 }
             }
 
