@@ -1,5 +1,35 @@
 # Release Notes
 
+## v1.5.1 - 2026-03-05
+
+### 🐛 Bug Fixes
+
+- **Fixed artist name overflow in smartphone HTML export**: Long artist names now properly truncate with ellipsis
+  - Added missing CSS text-overflow properties to `.artist-name` and `.artist-plays` in smartphone format
+  - Added `min-width: 0` to flex container to properly handle text truncation
+  - Added equivalent ellipsis handling for track information display
+
+- **Improved desktop HTML responsive design**: Enhanced media queries for mobile viewport (max-width: 768px)
+  - Artist list now stacks vertically on mobile instead of overflowing horizontally
+  - Adjusted avatar sizes and spacing for smaller screens
+  - Fixed artist information layout to properly respond to viewport changes
+  - Added font-size adjustments for mobile display
+
+- **Enhanced text truncation in desktop HTML**: Added ellipsis to artist play count to prevent layout issues
+  - All text fields in both smartphone and desktop formats now consistently handle overflow
+
+### 📝 Technical Notes
+
+- Modified `GenerateSmartphoneHtml()` CSS in report_exporter.cpp:
+  - `.artist-info` now includes `min-width: 0` for proper flex text truncation
+  - `.artist-name` now includes `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`
+  - `.artist-plays` now includes overflow handling
+- Modified desktop HTML CSS media queries to properly handle mobile viewport
+  - `.artist-list` becomes vertical flex layout on mobile
+  - Adjusted spacing and sizing for narrow screens
+
+---
+
 ## v1.5.0 - 2026-03-04
 
 ### ✨ New Features
@@ -77,7 +107,7 @@
 
 ### 📝 技術ノート
 
-- Export完了メッセージ復元用タイマー (ID 2) を追加
+- Export完了メッセージ復元用タイマー (ID 2) を追加1
 - Export形式トグルメッセージ復元用タイマー (ID 3) を追加
 - Status ラベルの位置を `x=350, y=272, w=130, h=10` から `x=7, y=288, w=466, h=12` に変更
 - `OnDestroy()` ですべてのタイマーをクリアしてリソースリークを防止

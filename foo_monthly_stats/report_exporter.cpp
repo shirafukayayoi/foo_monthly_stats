@@ -263,6 +263,7 @@ h1 {
     padding: 20px;
     margin: 20px 0;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
 }
 .artist-ranking h2 {
     font-size: 18px;
@@ -275,6 +276,7 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
 }
 .artist-item {
     display: flex;
@@ -283,6 +285,10 @@ h1 {
     background: rgba(255,255,255,0.1);
     padding: 12px;
     border-radius: 8px;
+    min-width: 0;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 .artist-avatar {
     width: 60px;
@@ -294,20 +300,35 @@ h1 {
 }
 .artist-info {
     flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 .artist-name {
     font-weight: 600;
     color: white;
-    font-size: 14px;
+    font-size: 12px;
     margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
 .artist-plays {
     font-weight: 500;
     color: rgba(255,255,255,0.8);
-    font-size: 12px;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
 .tracks-section {
     margin: 20px 0;
+    width: 100%;
 }
 .tracks-section h2 {
     font-size: 18px;
@@ -324,6 +345,8 @@ h1 {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    width: 100%;
+    box-sizing: border-box;
 }
 .track-art {
     width: 80px;
@@ -334,6 +357,7 @@ h1 {
 }
 .track-info {
     flex: 1;
+    min-width: 0;
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -612,7 +636,7 @@ h1 {
         {
             auto meta = head.append_child("meta");
             meta.append_attribute("name") = "viewport";
-            meta.append_attribute("content") = "width=device-width, initial-scale=1";
+            meta.append_attribute("content") = "width=1280, initial-scale=1";
         }
         head.append_child("title").text().set(periodLabel.c_str());
 
@@ -663,8 +687,9 @@ h1 {
     border-radius: 16px;
     padding: 1.5rem;
     margin: 2rem auto;
-    max-width: 100%;
+    width: 100%;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow-x: auto;
 }
 .artist-ranking h2 {
     font-size: 1.5rem;
@@ -673,59 +698,45 @@ h1 {
     margin-bottom: 1.5rem;
     text-align: center;
 }
-.artist-list {
-    display: flex;
-    gap: 2rem;
-    overflow-x: auto;
-    padding: 0.5rem;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.3) transparent;
+.artist-table {
+    border-collapse: separate;
+    border-spacing: 1.5rem 0;
+    white-space: nowrap;
 }
-.artist-list::-webkit-scrollbar {
-    height: 8px;
-}
-.artist-list::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-}
-.artist-list::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius: 4px;
-}
-.artist-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 140px;
+.artist-cell {
+    vertical-align: top;
     text-align: center;
+    width: 140px;
+    padding-bottom: 0.5rem;
 }
 .artist-avatar {
+    display: block;
     width: 140px;
     height: 140px;
+    margin: 0 auto 0.75rem;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    margin-bottom: 0.75rem;
     border: 3px solid rgba(255,255,255,0.5);
-    transition: transform 0.3s ease;
-}
-.artist-avatar:hover {
-    transform: scale(1.05);
 }
 .artist-name {
+    display: block;
     font-weight: 600;
     color: white;
     font-size: 0.9rem;
     margin-bottom: 0.25rem;
+    text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 140px;
+    width: 140px;
 }
 .artist-plays {
+    display: block;
     font-weight: 500;
     color: rgba(255,255,255,0.8);
     font-size: 0.85rem;
+    text-align: center;
 }
 .grid {
     display: grid;
@@ -833,11 +844,6 @@ h1 {
 .delta.negative {
     background: #f8d7da;
     color: #721c24;
-}
-@media (max-width: 768px) {
-    body { padding: 1.5rem 1rem; }
-    h1 { font-size: 2rem; margin-bottom: 1.5rem; }
-    .grid { grid-template-columns: 1fr; }
 }
 )CSS");
 
@@ -962,8 +968,11 @@ window.addEventListener('load', function() {
                 auto h2 = rankingDiv.append_child("h2");
                 h2.text().set("Top Artists");
 
-                auto artistList = rankingDiv.append_child("div");
-                artistList.append_attribute("class") = "artist-list";
+                // Use table for reliable single-row horizontal layout
+                auto table = rankingDiv.append_child("table");
+                table.append_attribute("class") = "artist-table";
+                auto tbody = table.append_child("tbody");
+                auto tr = tbody.append_child("tr");
 
                 int count = 0;
                 for (const auto &[artist, info] : artistVec)
@@ -971,14 +980,14 @@ window.addEventListener('load', function() {
                     if (++count > 10)
                         break;
 
-                    auto item = artistList.append_child("div");
-                    item.append_attribute("class") = "artist-item";
+                    auto td = tr.append_child("td");
+                    td.append_attribute("class") = "artist-cell";
 
                     // Album art (circular avatar)
                     auto it = artMap.find(info.topTrackCrc);
                     if (it != artMap.end())
                     {
-                        auto img = item.append_child("img");
+                        auto img = td.append_child("img");
                         img.append_attribute("class") = "artist-avatar";
                         img.append_attribute("src") = it->second.c_str();
                         img.append_attribute("alt") = artist.c_str();
@@ -986,17 +995,16 @@ window.addEventListener('load', function() {
                     }
                     else
                     {
-                        // Placeholder for missing art
-                        auto placeholder = item.append_child("div");
+                        auto placeholder = td.append_child("div");
                         placeholder.append_attribute("class") = "artist-avatar";
                         placeholder.append_attribute("style") = "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);";
                     }
 
-                    auto nameDiv = item.append_child("div");
+                    auto nameDiv = td.append_child("div");
                     nameDiv.append_attribute("class") = "artist-name";
                     nameDiv.text().set(artist.c_str());
 
-                    auto playsDiv = item.append_child("div");
+                    auto playsDiv = td.append_child("div");
                     playsDiv.append_attribute("class") = "artist-plays";
                     std::string playsText = std::to_string(info.totalPlays) + " plays";
                     playsDiv.text().set(playsText.c_str());
