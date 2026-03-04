@@ -84,6 +84,8 @@ namespace fms
     void DashboardWindow::OnDestroy()
     {
         KillTimer(1); // Stop any pending timer
+        KillTimer(2); // Stop export status restoration timer
+        KillTimer(3); // Stop export format toggle status restoration timer
         s_instance = nullptr;
     }
 
@@ -94,37 +96,16 @@ namespace fms
             KillTimer(1);
             Populate(); // Refresh after DB write completes
         }
-    }
-
-    void DashboardWindow::OnSize(UINT, CSize sz)
-    {
-        HWND hList = GetDlgItem(IDC_LIST_TRACKS);
-        if (!hList)
-            return;
-        // Resize list to fill most of the dialog
-        RECT rcDlg;
-        GetClientRect(&rcDlg);
-        int btnBottom = 25;
-        int statusH = 18;
-        ::SetWindowPos(hList, nullptr,
-                       7, 25,
-                       rcDlg.right - 14,
-                       rcDlg.bottom - 25 - statusH - 22,
-                       SWP_NOZORDER);
-        // Move bottom controls
-        HWND hExport = GetDlgItem(IDC_BTN_EXPORT);
-        HWND hExportFmt = GetDlgItem(IDC_BTN_EXPORT_FORMAT);
-        HWND hPrefs = GetDlgItem(IDC_BTN_PREFERENCES);
-        HWND hStatus = GetDlgItem(IDC_STATIC_STATUS);
-        int y = rcDlg.bottom - 20;
-        if (hExport)
-            ::SetWindowPos(hExport, nullptr, 7, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        if (hExportFmt)
-            ::SetWindowPos(hExportFmt, nullptr, 75, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        if (hPrefs)
-            ::SetWindowPos(hPrefs, nullptr, 275, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        if (hStatus)
-            ::SetWindowPos(hStatus, nullptr, 345, y + 2, rcDlg.right - 350, 14, SWP_NOZORDER);
+        else if (nIDEvent == 2)
+        {
+            KillTimer(2);
+            Populate(); // Restore normal status display (tracks count and listening time)
+        }
+        else if (nIDEvent == 3)
+        {
+            KillTimer(3);
+            Populate(); // Restore normal status display after export format toggle
+        }
     }
 
     void DashboardWindow::OnModeToggle(UINT, int, CWindow)
@@ -316,9 +297,12 @@ namespace fms
 
         // Update status message
         const char *statusMsg = m_exportFormatIsSmartphone
-                                    ? "Export format changed to: Smartphone (1080x1980px, Top 5 artists, Top 10 tracks)"
-                                    : "Export format changed to: Desktop (full report)";
+                                    ? "Smartphone (1080x1980px, Top 5/10)"
+                                    : "Desktop (full)";
         SetStatus(statusMsg);
+
+        // Schedule restoration of normal status display after 3 seconds
+        SetTimer(3, 3000);
     }
 
     void DashboardWindow::OnExport(UINT, int, CWindow)
@@ -399,6 +383,9 @@ namespace fms
         std::string exportMsg = "Export succeeded." + formatStr + " (" + std::to_string(m_entries.size()) +
                                 " tracks, " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s)";
         SetStatus(exportMsg.c_str());
+
+        // Schedule restoration of normal status display after 3 seconds
+        SetTimer(2, 3000);
     }
     void DashboardWindow::OnPreferences(UINT, int, CWindow)
     {

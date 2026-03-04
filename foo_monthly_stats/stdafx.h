@@ -12,6 +12,7 @@
 #include <libPPUI/CListControl.h>
 #include <libPPUI/CListControlSimple.h>
 #include <libPPUI/CListControlComplete.h>
+#include <libPPUI/CDialogResizeHelper.h>
 
 // Windows
 #include <shellapi.h>

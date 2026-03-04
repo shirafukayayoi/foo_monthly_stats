@@ -1,5 +1,91 @@
 # Release Notes
 
+## v1.5.0 - 2026-03-04
+
+### ✨ New Features
+
+- **Smartphone HTML export format**: Added optimized HTML export for mobile devices
+  - Toggle between Desktop (full report) and Smartphone (1080x1980px) formats using "Export: format" button
+  - Smartphone format features:
+    - Optimized for 1080x1980px mobile viewport
+    - Display top 5 artists with their highest-played tracks
+    - Display top 10 tracks overall
+    - Responsive design for narrower screens
+  - Desktop format: Complete monthly/yearly report with all tracks and artists
+
+### 🎨 UI Improvements
+
+- **Enhanced Export button layout**: Adjusted button positioning for better visibility
+  - Export: Desktop button width optimized for full text display
+  - Status label relocated below buttons for better readability
+  - Increased status label width to display longer messages
+
+### 🔄 Export Process Enhancements
+
+- **Export completion feedback**: Export button now displays completion message for 3 seconds before returning to normal status
+  - Shows format-specific confirmation with file count and total listening time
+  - Automatically restores listening time display after message timeout
+  - Consistent user feedback pattern with no loss of dashboard information
+
+- **Export format toggle feedback**: Switching between Desktop and Smartphone format now shows confirmation message
+  - Displays selected format details for 3 seconds
+  - Message options: "Smartphone (1080x1980px, Top 5/10)" or "Desktop (full)"
+  - Automatically restores listening time display after timeout
+
+### 📝 Technical Notes
+
+- Added timer (ID 2) for export completion message restoration
+- Added timer (ID 3) for export format toggle message restoration
+- Status label repositioned from `x=350, y=272, w=130, h=10` to `x=7, y=288, w=466, h=12`
+- All timers properly cleaned up in `OnDestroy()` to prevent resource leaks
+- `m_exportFormatIsSmartphone` flag controls HTML export formatting
+- Report filename includes `_smartphone` suffix for Smartphone format exports
+
+---
+
+## v1.5.0 - 2026-03-04（日本語）
+
+### ✨ 新機能
+
+- **スマートフォン向けHTML形式エクスポート**: モバイルデバイス用の最適化されたHTML エクスポート形式を追加
+  - "Export: format" ボタンを使用して Desktop（フルレポート）と Smartphone（1080x1980px）形式を切り替え
+  - スマートフォン形式の特徴：
+    - 1080x1980px のモバイルビューポートに最適化
+    - トップ5アーティストとそれぞれの最高再生トラックを表示
+    - トップ10トラック全体を表示
+    - 狭い画面用のレスポンシブデザイン
+  - デスクトップ形式：すべてのトラックとアーティストを含む完全な月別/年別レポート
+
+### 🎨 UI改善
+
+- **Exportボタンレイアウトの強化**: ボタンの配置を改善して視認性を向上
+  - Export: Desktop ボタンの幅を最適化してテキスト全体を表示
+  - Status ラベルをボタン下に移動して可読性を向上
+  - Status ラベルの幅を増加させて長いメッセージに対応
+
+### 🔄 Exportプロセスの強化
+
+- **Export完了フィードバック**: Export ボタン押下時に完了メッセージを3秒間表示してから通常表示に戻す
+  - 形式別の確認メッセージとファイル数、総再生時間を表示
+  - メッセージタイムアウト後に自動的に再生時間表示を復元
+  - ダッシュボード情報の損失なしで一貫性のあるユーザーフィードバック
+
+- **Export形式トグルフィードバック**: Desktop/Smartphone形式の切り替え時に確認メッセージを表示
+  - 選択された形式の詳細を3秒間表示
+  - メッセージオプション：「Smartphone (1080x1980px, Top 5/10)」または「Desktop (full)」
+  - タイムアウト後に自動的に再生時間表示を復元
+
+### 📝 技術ノート
+
+- Export完了メッセージ復元用タイマー (ID 2) を追加
+- Export形式トグルメッセージ復元用タイマー (ID 3) を追加
+- Status ラベルの位置を `x=350, y=272, w=130, h=10` から `x=7, y=288, w=466, h=12` に変更
+- `OnDestroy()` ですべてのタイマーをクリアしてリソースリークを防止
+- `m_exportFormatIsSmartphone` フラグで HTML エクスポート形式を制御
+- スマートフォン形式のエクスポートではファイル名に `_smartphone` サフィックスを付加
+
+---
+
 ## v1.4.0 - 2026-03-04
 
 ### ✨ New Features

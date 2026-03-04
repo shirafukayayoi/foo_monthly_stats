@@ -5,6 +5,24 @@
 
 namespace fms
 {
+    // Static resize parameters for dashboard dialog
+    static const CDialogResizeHelper::Param dashboardResizeParams[] = {
+        // Upper row: Mode, Prev, Period label, Next, Delete, Reset buttons
+        {IDC_BTN_MODE_TOGGLE, 0, 0, 0, 0}, // fixed left-top
+        {IDC_BTN_PREV, 0, 0, 0, 0},        // fixed left-top
+        {IDC_STATIC, 0, 0, 0, 0},          // fixed width and position (do not expand)
+        {IDC_BTN_NEXT, 0, 0, 0, 0},        // fixed left-top
+        {IDC_BTN_DELETE, 1, 0, 1, 0},      // anchored to right, follows right edge
+        {IDC_BTN_RESET, 1, 0, 1, 0},       // anchored to right, follows right edge
+        // Main list view: expands in all directions
+        {IDC_LIST_TRACKS, 0, 0, 1, 1}, // expands in all directions
+        // Bottom row: All buttons and status fixed (no horizontal expansion)
+        // Only anchored to bottom (snapBottom=1), positions and widths are fixed
+        {IDC_BTN_EXPORT, 0, 1, 0, 1},        // fixed left, anchored to bottom
+        {IDC_BTN_EXPORT_FORMAT, 0, 1, 0, 1}, // fixed position, anchored to bottom
+        {IDC_BTN_PREFERENCES, 0, 1, 0, 1},   // fixed position, anchored to bottom
+        {IDC_STATIC_STATUS, 0, 1, 0, 1},     // fixed position, anchored to bottom
+    };
 
     // dashboard_window.h
     // Modeless dashboard window showing per-month play statistics.
@@ -25,14 +43,17 @@ namespace fms
             DAY
         };
 
+        // Constructor: Initialize m_resizer with resize parameters
+        DashboardWindow() : m_resizer(dashboardResizeParams, CRect(300, 150, 0, 0)) {}
+
         static void Open(); // Creates or activates the singleton window
         static void Close();
 
         BEGIN_MSG_MAP_EX(DashboardWindow)
+        CHAIN_MSG_MAP_MEMBER(m_resizer)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_CLOSE(OnClose)
         MSG_WM_DESTROY(OnDestroy)
-        MSG_WM_SIZE(OnSize)
         MSG_WM_TIMER(OnTimer)
         COMMAND_HANDLER_EX(IDC_BTN_MODE_TOGGLE, BN_CLICKED, OnModeToggle)
         COMMAND_HANDLER_EX(IDC_BTN_PREV, BN_CLICKED, OnPrev)
@@ -49,7 +70,6 @@ namespace fms
         BOOL OnInitDialog(CWindow, LPARAM);
         void OnClose();
         void OnDestroy();
-        void OnSize(UINT, CSize);
         void OnTimer(UINT_PTR nIDEvent);
         void OnModeToggle(UINT, int, CWindow);
         void OnPrev(UINT, int, CWindow);
@@ -73,6 +93,9 @@ namespace fms
         int m_sortCol = 4; // default: sort by plays
         bool m_sortAsc = false;
         bool m_exportFormatIsSmartphone = false; // Toggle between Desktop and Smartphone HTML export
+
+        // Dialog resize helper for auto-layout management
+        CDialogResizeHelper m_resizer;
 
         // Playback callback for auto-refresh
         class PlaybackCallbackImpl;
