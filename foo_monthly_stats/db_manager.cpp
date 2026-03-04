@@ -322,6 +322,25 @@ namespace fms
         sqlite3_exec(m_db, "ALTER TABLE monthly_count ADD COLUMN path TEXT NOT NULL DEFAULT ''", nullptr, nullptr, nullptr);
         sqlite3_exec(m_db, "ALTER TABLE monthly_count ADD COLUMN length_seconds REAL NOT NULL DEFAULT 0", nullptr, nullptr, nullptr);
         sqlite3_exec(m_db, "ALTER TABLE monthly_count ADD COLUMN total_time_seconds REAL NOT NULL DEFAULT 0", nullptr, nullptr, nullptr);
+
+        // Create temporary table for deduplication (will be cleared after use)
+        sqlite3_exec(m_db,
+                     "CREATE TABLE IF NOT EXISTS monthly_count_temp ("
+                     "  ymd       TEXT NOT NULL,"
+                     "  track_crc TEXT NOT NULL,"
+                     "  path      TEXT NOT NULL DEFAULT '',"
+                     "  title     TEXT,"
+                     "  artist    TEXT,"
+                     "  album     TEXT,"
+                     "  length_seconds REAL NOT NULL DEFAULT 0,"
+                     "  playcount INTEGER NOT NULL DEFAULT 0,"
+                     "  total_time_seconds REAL NOT NULL DEFAULT 0,"
+                     "  PRIMARY KEY (ymd, track_crc)"
+                     ");",
+                     nullptr, nullptr, nullptr);
+
+        // Remove duplicates on initialization (merge same titles by metadata)
+        removeDuplicates();
     }
 
     void DbManager::insertPlay(const TrackInfo &info)
@@ -390,6 +409,83 @@ namespace fms
                 FB2K_console_formatter() << "foo_monthly_stats: monthly_count prepare error: " << sqlite3_errmsg(m_db);
             }
         }
+    }
+
+    void DbManager::removeDuplicates()
+    {
+        if (!m_db)
+            return;
+
+        // Detect and consolidate duplicate entries with same title/artist/album but different track_crc
+        // This handles the case where files were moved/renamed and acquired different CRCs
+
+        sqlite3_exec(m_db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+
+        // Step 1: Create a temporary table with consolidated data
+        sqlite3_exec(m_db, "DELETE FROM monthly_count_temp;", nullptr, nullptr, nullptr);
+
+        // For each group of (title, artist, album), use the first encountered track_crc as canonical
+        // and sum up all playcounts and times
+        const char *consolidateSql =
+            "INSERT INTO monthly_count_temp "
+            "SELECT ymd, "
+            "       MIN(track_crc) AS canonical_crc,"
+            "       MAX(path) AS path,"
+            "       title, artist, album,"
+            "       MAX(length_seconds) AS length_seconds,"
+            "       SUM(playcount) AS total_playcount,"
+            "       SUM(total_time_seconds) AS total_time"
+            " FROM monthly_count"
+            " WHERE title != '' AND artist != '' AND album != ''"
+            " GROUP BY ymd, title, artist, album";
+
+        if (sqlite3_exec(m_db, consolidateSql, nullptr, nullptr, nullptr) != SQLITE_OK)
+        {
+            FB2K_console_formatter() << "foo_monthly_stats: consolidate duplicates error: " << sqlite3_errmsg(m_db);
+            sqlite3_exec(m_db, "ROLLBACK;", nullptr, nullptr, nullptr);
+            return;
+        }
+
+        // Check how many duplicates we found
+        int dupCount = 0;
+        {
+            sqlite3_stmt *stmt = nullptr;
+            const char *sql = "SELECT COUNT(*) FROM monthly_count_temp;";
+            if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                if (sqlite3_step(stmt) == SQLITE_ROW)
+                {
+                    dupCount = sqlite3_column_int(stmt, 0);
+                }
+                sqlite3_finalize(stmt);
+            }
+        }
+
+        if (dupCount > 0)
+        {
+            // Step 2: Remove old entries for duplicated groups
+            // Find which (title, artist, album) groups had duplicates
+            sqlite3_exec(m_db,
+                         "DELETE FROM monthly_count "
+                         " WHERE (title, artist, album) IN "
+                         "   (SELECT DISTINCT title, artist, album FROM monthly_count_temp);",
+                         nullptr, nullptr, nullptr);
+
+            // Step 3: Insert consolidated entries
+            sqlite3_exec(m_db,
+                         "INSERT INTO monthly_count "
+                         " SELECT ymd, canonical_crc, path, title, artist, album, "
+                         "        length_seconds, total_playcount, total_time"
+                         " FROM monthly_count_temp;",
+                         nullptr, nullptr, nullptr);
+
+            // Step 4: Clear temp table
+            sqlite3_exec(m_db, "DELETE FROM monthly_count_temp;", nullptr, nullptr, nullptr);
+
+            FB2K_console_formatter() << "foo_monthly_stats: consolidated " << dupCount << " duplicate track entries";
+        }
+
+        sqlite3_exec(m_db, "COMMIT;", nullptr, nullptr, nullptr);
     }
 
     std::vector<MonthlyEntry> DbManager::queryMonth(const std::string &ym)

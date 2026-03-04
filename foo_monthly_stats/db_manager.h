@@ -62,6 +62,10 @@ namespace fms
         // Delete a specific entry from monthly_count
         void deleteEntry(const std::string &ymd, const std::string &track_crc);
 
+        // Remove duplicate entries in monthly_count (same title/artist/album with different paths)
+        // Consolidates entries with identical metadata into a single track_crc
+        void removeDuplicates();
+
         // Query monthly data synchronously (called on main thread for UI)
         std::vector<MonthlyEntry> queryMonth(const std::string &ym);
 
