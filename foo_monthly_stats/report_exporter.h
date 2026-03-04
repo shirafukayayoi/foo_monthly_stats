@@ -20,12 +20,14 @@ namespace fms
 
         // Export HTML to the given path and optionally create PNG via Chrome headless.
         // artMap: optional map of track_crc -> base64 JPEG data URI for album art thumbnails.
+        // isSmartphone: if true, generates a 1080x1980px smartphone-optimized HTML (Top 5 artists, Top 10 tracks)
         // Returns an empty string on success, or an error message on failure.
         static std::string exportHtml(
             const std::string &periodLabel,
             const std::vector<MonthlyEntry> &entries,
             const std::wstring &htmlPath,
-            const std::map<std::string, std::string> &artMap = {});
+            const std::map<std::string, std::string> &artMap = {},
+            bool isSmartphone = false);
 
         // Launch chrome-headless.exe to convert htmlPath → pngPath.
         // chromePath: full path to chrome-headless.exe (may be empty = return error string)

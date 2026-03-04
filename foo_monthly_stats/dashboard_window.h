@@ -39,6 +39,7 @@ namespace fms
         COMMAND_HANDLER_EX(IDC_BTN_NEXT, BN_CLICKED, OnNext)
         COMMAND_HANDLER_EX(IDC_BTN_DELETE, BN_CLICKED, OnDelete)
         COMMAND_HANDLER_EX(IDC_BTN_RESET, BN_CLICKED, OnReset)
+        COMMAND_HANDLER_EX(IDC_BTN_EXPORT_FORMAT, BN_CLICKED, OnToggleExportFormat)
         COMMAND_HANDLER_EX(IDC_BTN_EXPORT, BN_CLICKED, OnExport)
         COMMAND_HANDLER_EX(IDC_BTN_PREFERENCES, BN_CLICKED, OnPreferences)
         NOTIFY_HANDLER_EX(IDC_LIST_TRACKS, LVN_COLUMNCLICK, OnColumnClick)
@@ -55,6 +56,7 @@ namespace fms
         void OnNext(UINT, int, CWindow);
         void OnDelete(UINT, int, CWindow);
         void OnReset(UINT, int, CWindow);
+        void OnToggleExportFormat(UINT, int, CWindow);
         void OnExport(UINT, int, CWindow);
         void OnPreferences(UINT, int, CWindow);
         LRESULT OnColumnClick(LPNMHDR);
@@ -63,12 +65,14 @@ namespace fms
         void Populate();
         void UpdatePeriodLabel();
         void SetStatus(const char *msg);
+        void UpdateExportFormatButton();
 
         ViewMode m_viewMode = MONTH;
         std::string m_period; // "YYYY-MM", "YYYY", or "YYYY-MM-DD"
         std::vector<MonthlyEntry> m_entries;
         int m_sortCol = 4; // default: sort by plays
         bool m_sortAsc = false;
+        bool m_exportFormatIsSmartphone = false; // Toggle between Desktop and Smartphone HTML export
 
         // Playback callback for auto-refresh
         class PlaybackCallbackImpl;

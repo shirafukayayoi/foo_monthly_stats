@@ -66,6 +66,7 @@ namespace fms
         SetDlgItemTextA(m_hWnd, IDC_BTN_MODE_TOGGLE, "Month");
         SetupListColumns();
         UpdatePeriodLabel();
+        UpdateExportFormatButton();
         Populate();
 
         // Register playback callback for auto-refresh
@@ -112,15 +113,18 @@ namespace fms
                        SWP_NOZORDER);
         // Move bottom controls
         HWND hExport = GetDlgItem(IDC_BTN_EXPORT);
+        HWND hExportFmt = GetDlgItem(IDC_BTN_EXPORT_FORMAT);
         HWND hPrefs = GetDlgItem(IDC_BTN_PREFERENCES);
         HWND hStatus = GetDlgItem(IDC_STATIC_STATUS);
         int y = rcDlg.bottom - 20;
         if (hExport)
             ::SetWindowPos(hExport, nullptr, 7, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        if (hExportFmt)
+            ::SetWindowPos(hExportFmt, nullptr, 75, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         if (hPrefs)
-            ::SetWindowPos(hPrefs, nullptr, 75, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            ::SetWindowPos(hPrefs, nullptr, 275, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         if (hStatus)
-            ::SetWindowPos(hStatus, nullptr, 145, y + 2, rcDlg.right - 150, 14, SWP_NOZORDER);
+            ::SetWindowPos(hStatus, nullptr, 345, y + 2, rcDlg.right - 350, 14, SWP_NOZORDER);
     }
 
     void DashboardWindow::OnModeToggle(UINT, int, CWindow)
@@ -294,8 +298,33 @@ namespace fms
         Populate();
     }
 
+    void DashboardWindow::UpdateExportFormatButton()
+    {
+        HWND hBtn = GetDlgItem(IDC_BTN_EXPORT_FORMAT);
+        if (hBtn)
+        {
+            const char *btnText = m_exportFormatIsSmartphone ? "Export: Smartphone (1080x1980)" : "Export: Desktop";
+            SetDlgItemTextA(m_hWnd, IDC_BTN_EXPORT_FORMAT, btnText);
+        }
+    }
+
+    void DashboardWindow::OnToggleExportFormat(UINT, int, CWindow)
+    {
+        // Toggle between Desktop and Smartphone format
+        m_exportFormatIsSmartphone = !m_exportFormatIsSmartphone;
+        UpdateExportFormatButton();
+
+        // Update status message
+        const char *statusMsg = m_exportFormatIsSmartphone
+                                    ? "Export format changed to: Smartphone (1080x1980px, Top 5 artists, Top 10 tracks)"
+                                    : "Export format changed to: Desktop (full report)";
+        SetStatus(statusMsg);
+    }
+
     void DashboardWindow::OnExport(UINT, int, CWindow)
     {
+        // Use the pre-selected format (m_exportFormatIsSmartphone)
+
         // Ask user for save location - use Downloads folder as default
         wchar_t htmlBuf[MAX_PATH] = {};
 
@@ -309,8 +338,10 @@ namespace fms
             initialPath += L"\\";
         }
 
-        // Append default filename
+        // Append default filename (with _smartphone suffix if applicable)
         std::string filenameSuffix = m_viewMode == MONTH ? m_period : ("year_" + m_period);
+        if (m_exportFormatIsSmartphone)
+            filenameSuffix += "_smartphone";
         std::wstring defaultName = pfc::stringcvt::string_wide_from_utf8(
             ("report_" + filenameSuffix + ".html").c_str());
         initialPath += defaultName;
@@ -332,9 +363,9 @@ namespace fms
         // Collect album art for each entry (runs on main thread, SDK access allowed)
         std::map<std::string, std::string> artMap = ReportExporter::collectArt(m_entries);
 
-        // Generate HTML
+        // Generate HTML (Desktop or Smartphone format)
         std::string periodLabel = m_viewMode == MONTH ? ("Monthly Stats – " + m_period) : ("Yearly Stats – " + m_period);
-        std::string err = ReportExporter::exportHtml(periodLabel, m_entries, htmlPath, artMap);
+        std::string err = ReportExporter::exportHtml(periodLabel, m_entries, htmlPath, artMap, m_exportFormatIsSmartphone);
         if (!err.empty())
         {
             SetStatus(err.c_str());
@@ -364,11 +395,11 @@ namespace fms
         int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
         int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
 
-        std::string exportMsg = "Export succeeded. (" + std::to_string(m_entries.size()) +
+        std::string formatStr = m_exportFormatIsSmartphone ? " (Smartphone format)" : " (Desktop format)";
+        std::string exportMsg = "Export succeeded." + formatStr + " (" + std::to_string(m_entries.size()) +
                                 " tracks, " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s)";
         SetStatus(exportMsg.c_str());
     }
-
     void DashboardWindow::OnPreferences(UINT, int, CWindow)
     {
         // Open preferences page via foobar2000 API

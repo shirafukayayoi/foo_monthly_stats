@@ -16,6 +16,7 @@
 #define IDC_STATIC_STATUS 1008
 #define IDC_BTN_MODE_TOGGLE 1009
 #define IDC_BTN_DELETE 1010
+#define IDC_BTN_EXPORT_FORMAT 1011
 
 // Preferences controls
 #define IDC_EDIT_DB_PATH 2001

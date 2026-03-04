@@ -162,15 +162,442 @@ namespace fms
         return artMap;
     }
 
+    // Smartphone HTML generation (1080x1980px fixed canvas)
+    // Must be called before the main exportHtml function
+    namespace
+    {
+        std::string GenerateSmartphoneHtml(
+            const std::string &periodLabel,
+            const std::vector<MonthlyEntry> &entries,
+            const std::wstring &htmlPath,
+            const std::map<std::string, std::string> &artMap)
+        {
+            pugi::xml_document doc;
+
+            // DOCTYPE
+            doc.append_child(pugi::node_doctype).set_value("html");
+
+            auto html = doc.append_child("html");
+            html.append_attribute("lang") = "ja";
+
+            // <head>
+            auto head = html.append_child("head");
+            head.append_child("meta").append_attribute("charset") = "UTF-8";
+            {
+                auto meta = head.append_child("meta");
+                meta.append_attribute("name") = "viewport";
+                meta.append_attribute("content") = "width=1080, initial-scale=1, maximum-scale=1, user-scalable=no";
+            }
+            head.append_child("title").text().set(periodLabel.c_str());
+
+            // Google Fonts (Inter)
+            {
+                auto link = head.append_child("link");
+                link.append_attribute("rel") = "preconnect";
+                link.append_attribute("href") = "https://fonts.googleapis.com";
+            }
+            {
+                auto link = head.append_child("link");
+                link.append_attribute("rel") = "preconnect";
+                link.append_attribute("href") = "https://fonts.gstatic.com";
+                link.append_attribute("crossorigin") = "";
+            }
+            {
+                auto link = head.append_child("link");
+                link.append_attribute("rel") = "stylesheet";
+                link.append_attribute("href") =
+                    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
+            }
+
+            // Embedded CSS for smartphone
+            auto style = head.append_child("style");
+            style.text().set(R"CSS(
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    width: 1080px;
+    height: 1980px;
+}
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 20px;
+    color: #1a1a1a;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.container {
+    width: 100%;
+    max-width: 1040px;
+}
+h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.time-stats {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.time-label {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 8px;
+}
+.time-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+}
+.artist-ranking {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.artist-ranking h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.artist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.artist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 8px;
+}
+.artist-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.5);
+}
+.artist-info {
+    flex: 1;
+}
+.artist-name {
+    font-weight: 600;
+    color: white;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.artist-plays {
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+}
+.tracks-section {
+    margin: 20px 0;
+}
+.tracks-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.track-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.track-art {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    object-fit: cover;
+}
+.track-info {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.track-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.track-artist {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.track-album {
+    font-size: 11px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.track-stats {
+    font-size: 13px;
+    font-weight: 600;
+    color: #667eea;
+}
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+}
+)CSS");
+
+            // <body>
+            auto body = html.append_child("body");
+            auto container = body.append_child("div");
+            container.append_attribute("class") = "container";
+
+            // Title
+            {
+                auto h1 = container.append_child("h1");
+                h1.text().set(periodLabel.c_str());
+            }
+
+            // Total playback time
+            {
+                double totalSeconds = 0.0;
+                for (const auto &e : entries)
+                {
+                    totalSeconds += e.total_time_seconds;
+                }
+
+                int hours = static_cast<int>(totalSeconds / 3600);
+                int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
+                int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
+
+                auto timeDiv = container.append_child("div");
+                timeDiv.append_attribute("class") = "time-stats";
+
+                auto label = timeDiv.append_child("div");
+                label.append_attribute("class") = "time-label";
+                label.text().set("Total Listening Time");
+
+                auto value = timeDiv.append_child("div");
+                value.append_attribute("class") = "time-value";
+                std::string timeText = std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
+                value.text().set(timeText.c_str());
+            }
+
+            // Artist Ranking (Top 5)
+            {
+                // Aggregate plays by artist
+                struct ArtistInfo
+                {
+                    int64_t totalPlays = 0;
+                    std::string topTrackCrc;
+                    int64_t topTrackPlays = 0;
+                };
+                std::map<std::string, ArtistInfo> artistMap;
+
+                for (const auto &e : entries)
+                {
+                    auto &info = artistMap[e.artist];
+                    info.totalPlays += e.playcount;
+
+                    if (e.playcount > info.topTrackPlays)
+                    {
+                        info.topTrackPlays = e.playcount;
+                        info.topTrackCrc = e.track_crc;
+                    }
+                }
+
+                // Sort by total playcount
+                std::vector<std::pair<std::string, ArtistInfo>> artistVec;
+                for (const auto &[artist, info] : artistMap)
+                {
+                    artistVec.push_back({artist, info});
+                }
+                std::sort(artistVec.begin(), artistVec.end(),
+                          [](const auto &a, const auto &b)
+                          { return a.second.totalPlays > b.second.totalPlays; });
+
+                // Display top 5 artists
+                if (!artistVec.empty())
+                {
+                    auto rankingDiv = container.append_child("div");
+                    rankingDiv.append_attribute("class") = "artist-ranking";
+
+                    auto h2 = rankingDiv.append_child("h2");
+                    h2.text().set("Top 5 Artists");
+
+                    auto artistList = rankingDiv.append_child("div");
+                    artistList.append_attribute("class") = "artist-list";
+
+                    int count = 0;
+                    for (const auto &[artist, info] : artistVec)
+                    {
+                        if (++count > 5)
+                            break;
+
+                        auto item = artistList.append_child("div");
+                        item.append_attribute("class") = "artist-item";
+
+                        // Album art
+                        auto it = artMap.find(info.topTrackCrc);
+                        if (it != artMap.end())
+                        {
+                            auto img = item.append_child("img");
+                            img.append_attribute("class") = "artist-avatar";
+                            img.append_attribute("src") = it->second.c_str();
+                            img.append_attribute("alt") = artist.c_str();
+                            img.append_attribute("loading") = "lazy";
+                        }
+                        else
+                        {
+                            auto placeholder = item.append_child("div");
+                            placeholder.append_attribute("class") = "artist-avatar";
+                            placeholder.append_attribute("style") = "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);";
+                        }
+
+                        auto info_div = item.append_child("div");
+                        info_div.append_attribute("class") = "artist-info";
+
+                        auto nameDiv = info_div.append_child("div");
+                        nameDiv.append_attribute("class") = "artist-name";
+                        nameDiv.text().set(artist.c_str());
+
+                        auto playsDiv = info_div.append_child("div");
+                        playsDiv.append_attribute("class") = "artist-plays";
+                        std::string playsText = std::to_string(info.totalPlays) + " plays";
+                        playsDiv.text().set(playsText.c_str());
+                    }
+                }
+            }
+
+            // Top Tracks (limit to top 10)
+            {
+                std::vector<MonthlyEntry> sortedEntries = entries;
+                std::sort(sortedEntries.begin(), sortedEntries.end(),
+                          [](const auto &a, const auto &b)
+                          { return a.playcount > b.playcount; });
+
+                auto tracksDiv = container.append_child("div");
+                tracksDiv.append_attribute("class") = "tracks-section";
+
+                auto h2 = tracksDiv.append_child("h2");
+                h2.text().set("Top Tracks");
+
+                int rank = 1;
+                for (const auto &e : sortedEntries)
+                {
+                    if (rank > 10)
+                        break;
+
+                    auto item = tracksDiv.append_child("div");
+                    item.append_attribute("class") = "track-item";
+
+                    // Album art
+                    auto it = artMap.find(e.track_crc);
+                    if (it != artMap.end())
+                    {
+                        auto img = item.append_child("img");
+                        img.append_attribute("class") = "track-art";
+                        img.append_attribute("src") = it->second.c_str();
+                        img.append_attribute("alt") = e.album.c_str();
+                        img.append_attribute("loading") = "lazy";
+                    }
+                    else
+                    {
+                        auto placeholder = item.append_child("div");
+                        placeholder.append_attribute("class") = "track-art";
+                        placeholder.append_attribute("style") = "background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);";
+                    }
+
+                    // Track info
+                    auto info = item.append_child("div");
+                    info.append_attribute("class") = "track-info";
+
+                    auto title = info.append_child("div");
+                    title.append_attribute("class") = "track-title";
+                    title.text().set(e.title.c_str());
+
+                    auto artist = info.append_child("div");
+                    artist.append_attribute("class") = "track-artist";
+                    artist.text().set(e.artist.c_str());
+
+                    auto album = info.append_child("div");
+                    album.append_attribute("class") = "track-album";
+                    album.text().set(e.album.c_str());
+
+                    auto stats = info.append_child("div");
+                    stats.append_attribute("class") = "track-stats";
+                    std::string playsText = std::to_string(e.playcount) + " plays";
+                    stats.text().set(playsText.c_str());
+
+                    rank++;
+                }
+            }
+
+            // Footer
+            {
+                auto footer = container.append_child("div");
+                footer.append_attribute("class") = "footer";
+                footer.text().set("Generated by foo_monthly_stats");
+            }
+
+            // Save file
+            bool ok = doc.save_file(htmlPath.c_str(), "  ", pugi::format_default | pugi::format_write_bom, pugi::encoding_utf8);
+            if (!ok)
+            {
+                std::string errPath = pfc::stringcvt::string_utf8_from_wide(htmlPath.c_str());
+                return "Failed to write smartphone HTML file: " + errPath;
+            }
+            return "";
+        }
+    } // anonymous namespace
+
     // ---------------------------------------------------------------------------
-    // HTML generation using pugixml
+    // HTML generation using pugixml (Desktop version)
     // ---------------------------------------------------------------------------
     std::string ReportExporter::exportHtml(
         const std::string &periodLabel,
         const std::vector<MonthlyEntry> &entries,
         const std::wstring &htmlPath,
-        const std::map<std::string, std::string> &artMap)
+        const std::map<std::string, std::string> &artMap,
+        bool isSmartphone)
     {
+        // For smartphone format, use a separate implementation
+        if (isSmartphone)
+        {
+            return GenerateSmartphoneHtml(periodLabel, entries, htmlPath, artMap);
+        }
+
         pugi::xml_document doc;
 
         // DOCTYPE
