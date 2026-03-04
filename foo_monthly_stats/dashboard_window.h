@@ -21,7 +21,8 @@ namespace fms
         enum ViewMode
         {
             MONTH,
-            YEAR
+            YEAR,
+            DAY
         };
 
         static void Open(); // Creates or activates the singleton window
@@ -64,7 +65,7 @@ namespace fms
         void SetStatus(const char *msg);
 
         ViewMode m_viewMode = MONTH;
-        std::string m_period; // "YYYY-MM" or "YYYY"
+        std::string m_period; // "YYYY-MM", "YYYY", or "YYYY-MM-DD"
         std::vector<MonthlyEntry> m_entries;
         int m_sortCol = 4; // default: sort by plays
         bool m_sortAsc = false;

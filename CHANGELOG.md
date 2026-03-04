@@ -1,5 +1,73 @@
 # Release Notes
 
+## v1.4.0 - 2026-03-04
+
+### ✨ New Features
+
+- **Daily (DAY) view mode**: Added Day-level statistics tracking alongside Month and Year
+  - Cycle through Month → Year → Day views with Month/Year button
+  - Navigate between days using Previous/Next arrows
+  - View play statistics per day with "昨日比" (previous day comparison)
+  - All historical data preserved during upgrade
+
+### 🔄 Database Schema Migration
+
+- **Automatic migration from v1.3.3**: Existing monthly data (`YYYY-MM` format) is automatically migrated to daily format
+  - Old monthly records are assigned to today's date (`YYYY-MM-DD`)
+  - Ensures seamless upgrade experience without data loss
+  - All column references updated from `ym` to `ymd` (YYYY-MM-DD format)
+
+### 🐛 UI Improvements
+
+- Delta column header now updates correctly for all three modes:
+  - Month mode: "先月比" (Month-over-Month)
+  - Day mode: "昨日比" (Day-over-Day)
+  - Year mode: "前年比" (Year-over-Year)
+
+### 📝 Technical Notes
+
+- `MonthlyEntry.ymd` now stores all aggregation levels (day/month/year)
+- `DbManager::queryDay()`, `queryMonth()`, `queryYear()` all use unified `ymd` field
+- `DbManager::currentYMD()` returns current date in YYYY-MM-DD format
+- `DashboardWindow::ViewMode` enum extended: MONTH, YEAR, DAY (cyclic toggle)
+- Schema supports both backward compatibility (existing `YYYY-MM` data) and forward compatibility (new `YYYY-MM-DD` data)
+
+---
+
+## v1.4.0 - 2026-03-04（日本語）
+
+### ✨ 新機能
+
+- **日単位（DAY）表示モード**: 月別・年別に加えて日別統計追跡機能を追加
+  - Month/Year ボタンで Month → Year → Day ビューを循環
+  - 前日/次日矢印ボタンで日付ナビゲーション
+  - 「昨日比」付きで日別再生統計を表示
+  - アップグレード時に過去のすべてのデータが保持される
+
+### 🔄 データベーススキーマ移行
+
+- **v1.3.3 からの自動マイグレーション**: 既存の月別データ（`YYYY-MM` 形式）自動的に日別形式に移行
+  - 古い月別レコードは本日の日付（`YYYY-MM-DD`）に割り当てられる
+  - データ損失なしのシームレスなアップグレード体験を実現
+  - すべてのカラム参照を `ym` から `ymd`（YYYY-MM-DD 形式）に更新
+
+### 🐛 UI 改善
+
+- 3つのモードすべてに対応した Delta カラムヘッダー表示：
+  - 月間モード：「先月比」（月間比較）
+  - 日間モード：「昨日比」（日間比較）
+  - 年間モード：「前年比」（年間比較）
+
+### 📝 技術ノート
+
+- `MonthlyEntry.ymd` はすべての集約レベル（日/月/年）を保存
+- `DbManager::queryDay()`、`queryMonth()`、`queryYear()` はすべて統一された `ymd` フィールドを使用
+- `DbManager::currentYMD()` は現在の日付を YYYY-MM-DD 形式で返す
+- `DashboardWindow::ViewMode` enum 拡張：MONTH、YEAR、DAY（循環toggle）
+- スキーマは後方互換性（既存 `YYYY-MM` データ）と前方互換性（新規 `YYYY-MM-DD` データ）をサポート
+
+---
+
 ## v1.3.2 - 2026-02-26
 
 ### 🐛 Bug Fixes

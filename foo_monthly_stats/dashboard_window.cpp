@@ -63,6 +63,7 @@ namespace fms
     {
         m_viewMode = MONTH;
         m_period = DbManager::currentYM();
+        SetDlgItemTextA(m_hWnd, IDC_BTN_MODE_TOGGLE, "Month");
         SetupListColumns();
         UpdatePeriodLabel();
         Populate();
@@ -130,13 +131,30 @@ namespace fms
             m_viewMode = YEAR;
             m_period = m_period.substr(0, 4); // "2026-02" -> "2026"
         }
-        else
+        else if (m_viewMode == YEAR)
+        {
+            // Switch to Day mode
+            m_viewMode = DAY;
+            m_period = DbManager::currentYMD(); // Get today's date
+        }
+        else // DAY
         {
             // Switch to Month mode
             m_viewMode = MONTH;
-            m_period = m_period + "-" + DbManager::currentYM().substr(5, 2); // "2026" -> "2026-02"
+            m_period = m_period.substr(0, 7); // "2026-03-04" -> "2026-03"
         }
+        // Update button text based on current mode
+        const char *btnText;
+        if (m_viewMode == MONTH)
+            btnText = "Month";
+        else if (m_viewMode == YEAR)
+            btnText = "Year";
+        else
+            btnText = "Day";
+        SetDlgItemTextA(m_hWnd, IDC_BTN_MODE_TOGGLE, btnText);
+
         UpdatePeriodLabel();
+        SetupListColumns(); // Update column header (先月比 ↔ 昨日比 ↔ 前年比)
         Populate();
     }
 
@@ -153,6 +171,29 @@ namespace fms
             }
             char buf[8];
             snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
+            m_period = buf;
+        }
+        else if (m_viewMode == DAY)
+        {
+            int year = std::stoi(m_period.substr(0, 4));
+            int month = std::stoi(m_period.substr(5, 2));
+            int day = std::stoi(m_period.substr(8, 2));
+            day--;
+            if (day == 0)
+            {
+                month--;
+                if (month == 0)
+                {
+                    month = 12;
+                    year--;
+                }
+                // Last day of previous month
+                static const int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+                int leap = ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) ? 1 : 0;
+                day = daysInMonth[month] + (month == 2 ? leap : 0);
+            }
+            char buf[11];
+            snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, month, day);
             m_period = buf;
         }
         else // YEAR
@@ -178,6 +219,30 @@ namespace fms
             }
             char buf[8];
             snprintf(buf, sizeof(buf), "%04d-%02d", year, month);
+            m_period = buf;
+        }
+        else if (m_viewMode == DAY)
+        {
+            int year = std::stoi(m_period.substr(0, 4));
+            int month = std::stoi(m_period.substr(5, 2));
+            int day = std::stoi(m_period.substr(8, 2));
+            day++;
+            // Simple month lengths (leap year not perfectly handled for edge cases)
+            static const int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+            int leap = ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) ? 1 : 0;
+            int maxDay = daysInMonth[month] + (month == 2 ? leap : 0);
+            if (day > maxDay)
+            {
+                day = 1;
+                month++;
+                if (month > 12)
+                {
+                    month = 1;
+                    year++;
+                }
+            }
+            char buf[11];
+            snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, month, day);
             m_period = buf;
         }
         else // YEAR
@@ -214,7 +279,7 @@ namespace fms
             if (index >= 0 && index < static_cast<int>(m_entries.size()))
             {
                 const auto &entry = m_entries[index];
-                DbManager::get().deleteEntry(entry.ym, entry.track_crc);
+                DbManager::get().deleteEntry(entry.ymd, entry.track_crc);
             }
         }
 
@@ -371,6 +436,12 @@ namespace fms
     void DashboardWindow::SetupListColumns()
     {
         HWND hList = GetDlgItem(IDC_LIST_TRACKS);
+
+        // Clear existing columns
+        while (ListView_DeleteColumn(hList, 0))
+        {
+        }
+
         ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
         struct Col
@@ -378,13 +449,23 @@ namespace fms
             const wchar_t *name;
             int width;
         };
+
+        // Adjust delta column label based on view mode
+        const wchar_t *deltaLabel;
+        if (m_viewMode == MONTH)
+            deltaLabel = L"先月比"; // Month-over-Month
+        else if (m_viewMode == DAY)
+            deltaLabel = L"昨日比"; // Day-over-Day
+        else                        // YEAR
+            deltaLabel = L"前年比"; // Year-over-Year
+
         const Col cols[] = {
             {L"#", 40},
             {L"Title – Artist", 260},
             {L"Artist", 120},
             {L"Album", 120},
             {L"Plays", 60},
-            {L"先月比", 60},
+            {deltaLabel, 60},
         };
         LVCOLUMNW lvc{};
         lvc.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_FMT;
@@ -400,9 +481,13 @@ namespace fms
 
     void DashboardWindow::Populate()
     {
-        m_entries = m_viewMode == MONTH
-                        ? DbManager::get().queryMonth(m_period)
-                        : DbManager::get().queryYear(m_period);
+        if (m_viewMode == MONTH)
+            m_entries = DbManager::get().queryMonth(m_period);
+        else if (m_viewMode == DAY)
+            m_entries = DbManager::get().queryDay(m_period);
+        else // YEAR
+            m_entries = DbManager::get().queryYear(m_period);
+
         // Sort by playcount desc initially
         std::sort(m_entries.begin(), m_entries.end(), [](const MonthlyEntry &a, const MonthlyEntry &b)
                   { return a.playcount > b.playcount; });

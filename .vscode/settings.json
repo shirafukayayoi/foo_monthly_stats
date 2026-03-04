@@ -1,0 +1,12 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^cmd /c \"\"\"\\$\\{env:ProgramFiles\\(x86\\)\\}\\\\Microsoft Visual Studio\\\\Installer\\\\vswhere\\.exe\"\" -latest -products \"\\*\" -requires Microsoft\\.VisualStudio\\.Component\\.VC\\.Tools\\.x86\\.x64 -property installationPath\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^\\$vsPath = & \"\\$\\{env:ProgramFiles\\(x86\\)\\}\\\\Microsoft Visual Studio\\\\Installer\\\\vswhere\\.exe\" -latest -products \\* -property installationPath; & \"\\$vsPath\\\\Common7\\\\Tools\\\\VsDevCmd\\.bat\" -arch=x64 -no_logo 2>&1 \\| Out-Null; cd foo_monthly_stats; msbuild foo_monthly_stats\\.vcxproj /p:Configuration=Release /p:Platform=x64 /nologo 2>&1$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}

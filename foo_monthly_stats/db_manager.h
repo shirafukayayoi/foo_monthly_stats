@@ -19,11 +19,11 @@ namespace fms
     };
 
     // -----------------------------------------------------------------------
-    // MonthlyEntry – one row from monthly_count JOIN data
+    // MonthlyEntry – one row from daily_count JOIN data (aggregated at day/month/year level)
     // -----------------------------------------------------------------------
     struct MonthlyEntry
     {
-        std::string ym; // "2025-07"
+        std::string ymd; // "2025-07-01" (YYYY-MM-DD, aggregated per view mode)
         std::string track_crc;
         std::string path; // original file path (for album art lookup)
         std::string title;
@@ -60,16 +60,22 @@ namespace fms
         void refreshPeriod(const std::string &period, bool isYear);
 
         // Delete a specific entry from monthly_count
-        void deleteEntry(const std::string &ym, const std::string &track_crc);
+        void deleteEntry(const std::string &ymd, const std::string &track_crc);
 
         // Query monthly data synchronously (called on main thread for UI)
         std::vector<MonthlyEntry> queryMonth(const std::string &ym);
+
+        // Query daily data synchronously (shows play stats for a specific day)
+        std::vector<MonthlyEntry> queryDay(const std::string &ymd);
 
         // Query yearly data synchronously (aggregates all months in a year)
         std::vector<MonthlyEntry> queryYear(const std::string &year);
 
         // Compute current "YYYY-MM" string
         static std::string currentYM();
+
+        // Compute current "YYYY-MM-DD" string
+        static std::string currentYMD();
 
         // Compute current "YYYY" string
         static std::string currentYear();
