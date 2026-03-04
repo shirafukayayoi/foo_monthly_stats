@@ -384,12 +384,13 @@ namespace fms
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
     width: 1080px;
-    height: 1980px;
+    height: auto;
+    min-height: 1980px;
 }
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 30px 20px;
+    padding: 40px 20px;
     color: #1a1a1a;
     overflow-y: auto;
     overflow-x: hidden;
@@ -397,75 +398,146 @@ body {
 .container {
     width: 100%;
     max-width: 1040px;
+    margin: 0 auto;
 }
 h1 {
-    font-size: 24px;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 20px;
-    text-align: center;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-.time-stats {
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px 0;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.time-label {
-    font-size: 14px;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 8px;
-}
-.time-value {
     font-size: 28px;
     font-weight: 700;
     color: white;
+    margin-bottom: 30px;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    letter-spacing: 0.5px;
+}
+/* 統計情報セクション - Instagram用に大きく表示 */
+.stats-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+.stat-card {
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+}
+.stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+}
+.stat-subtext {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 8px;
+}
+/* トップアーティスト - 大きく強調 */
+.top-artist-section {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 30px;
+    margin: 30px 0;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+.section-label {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.top-artist-name {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+.top-artist-info {
+    font-size: 18px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 20px;
+}
+.top-artist-art {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin: 0 auto;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    border: 3px solid rgba(255,255,255,0.4);
 }
 .artist-ranking {
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 30px 0;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
     width: 100%;
 }
 .artist-ranking h2 {
     font-size: 18px;
     font-weight: 600;
     color: white;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 .artist-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     width: 100%;
 }
 .artist-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgba(255,255,255,0.1);
-    padding: 12px;
-    border-radius: 8px;
+    gap: 14px;
+    background: rgba(255,255,255,0.08);
+    padding: 14px;
+    border-radius: 12px;
     min-width: 0;
     overflow: hidden;
     width: 100%;
     box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: background 0.2s;
+}
+.artist-item:hover {
+    background: rgba(255,255,255,0.12);
 }
 .artist-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
     object-fit: cover;
     flex-shrink: 0;
     border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .artist-info {
     flex: 1;
@@ -476,11 +548,17 @@ h1 {
     flex-direction: column;
     justify-content: center;
 }
+.artist-rank {
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+    margin-bottom: 2px;
+}
 .artist-name {
-    font-weight: 600;
+    font-weight: 700;
     color: white;
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 14px;
+    margin-bottom: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -489,37 +567,43 @@ h1 {
 .artist-plays {
     font-weight: 500;
     color: rgba(255,255,255,0.8);
-    font-size: 11px;
+    font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
 }
 .tracks-section {
-    margin: 20px 0;
+    margin: 30px 0;
     width: 100%;
 }
 .tracks-section h2 {
     font-size: 18px;
     font-weight: 600;
     color: white;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 .track-item {
     display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 14px;
     background: white;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     width: 100%;
     box-sizing: border-box;
+    transition: transform 0.2s;
+}
+.track-item:hover {
+    transform: translateY(-2px);
 }
 .track-art {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     flex-shrink: 0;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     object-fit: cover;
@@ -527,19 +611,20 @@ h1 {
 .track-info {
     flex: 1;
     min-width: 0;
-    padding: 12px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
 .track-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #1a1a1a;
     margin-bottom: 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.2;
 }
 .track-artist {
     font-size: 12px;
@@ -555,16 +640,27 @@ h1 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-bottom: 4px;
+}
+.track-rank {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 28px;
 }
 .track-stats {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: #667eea;
 }
 .footer {
     text-align: center;
-    margin-top: 20px;
-    padding-top: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
     border-top: 1px solid rgba(255,255,255,0.2);
     color: rgba(255,255,255,0.7);
     font-size: 12px;
@@ -582,29 +678,122 @@ h1 {
                 h1.text().set(periodLabel.c_str());
             }
 
-            // Total playback time
+            // Calculate statistics
+            int64_t totalPlaycount = 0;
+            double totalSeconds = 0.0;
+            std::string topArtist;
+            int64_t topArtistPlays = 0;
+            std::string topArtistCrc;
+
+            // Aggregate stats
+            std::map<std::string, int64_t> artistPlays;
+            for (const auto &e : entries)
             {
-                double totalSeconds = 0.0;
+                totalPlaycount += e.playcount;
+                totalSeconds += e.total_time_seconds;
+                artistPlays[e.artist] += e.playcount;
+            }
+
+            // Find top artist
+            for (const auto &[artist, plays] : artistPlays)
+            {
+                if (plays > topArtistPlays)
+                {
+                    topArtistPlays = plays;
+                    topArtist = artist;
+                }
+            }
+
+            // Find album art for top artist
+            if (!topArtist.empty())
+            {
                 for (const auto &e : entries)
                 {
-                    totalSeconds += e.total_time_seconds;
+                    if (e.artist == topArtist)
+                    {
+                        topArtistCrc = e.track_crc;
+                        break;
+                    }
+                }
+            }
+
+            // Statistics cards
+            {
+                auto statsContainer = container.append_child("div");
+                statsContainer.append_attribute("class") = "stats-container";
+
+                // Total plays card
+                {
+                    auto card = statsContainer.append_child("div");
+                    card.append_attribute("class") = "stat-card";
+
+                    auto label = card.append_child("div");
+                    label.append_attribute("class") = "stat-label";
+                    label.text().set("Total Plays");
+
+                    auto value = card.append_child("div");
+                    value.append_attribute("class") = "stat-value";
+                    value.text().set(std::to_string(totalPlaycount).c_str());
                 }
 
-                int hours = static_cast<int>(totalSeconds / 3600);
-                int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
-                int seconds = static_cast<int>(totalSeconds - hours * 3600 - minutes * 60);
+                // Total listening time card
+                {
+                    auto card = statsContainer.append_child("div");
+                    card.append_attribute("class") = "stat-card";
 
-                auto timeDiv = container.append_child("div");
-                timeDiv.append_attribute("class") = "time-stats";
+                    auto label = card.append_child("div");
+                    label.append_attribute("class") = "stat-label";
+                    label.text().set("Total Time");
 
-                auto label = timeDiv.append_child("div");
-                label.append_attribute("class") = "time-label";
-                label.text().set("Total Listening Time");
+                    int hours = static_cast<int>(totalSeconds / 3600);
+                    int minutes = static_cast<int>((totalSeconds - hours * 3600) / 60);
 
-                auto value = timeDiv.append_child("div");
-                value.append_attribute("class") = "time-value";
-                std::string timeText = std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
-                value.text().set(timeText.c_str());
+                    auto value = card.append_child("div");
+                    value.append_attribute("class") = "stat-value";
+                    std::string timeText = std::to_string(hours) + "h " + std::to_string(minutes) + "m";
+                    value.text().set(timeText.c_str());
+
+                    auto subtext = card.append_child("div");
+                    subtext.append_attribute("class") = "stat-subtext";
+                    std::string subtextStr = std::to_string(static_cast<long long>(totalSeconds)) + " seconds";
+                    subtext.text().set(subtextStr.c_str());
+                }
+            }
+
+            // Top Artist Section (highlighted)
+            if (!topArtist.empty())
+            {
+                auto topArtistDiv = container.append_child("div");
+                topArtistDiv.append_attribute("class") = "top-artist-section";
+
+                auto sectionLabel = topArtistDiv.append_child("div");
+                sectionLabel.append_attribute("class") = "section-label";
+                sectionLabel.text().set("Most Played Artist");
+
+                auto artistName = topArtistDiv.append_child("div");
+                artistName.append_attribute("class") = "top-artist-name";
+                artistName.text().set(topArtist.c_str());
+
+                auto artistInfo = topArtistDiv.append_child("div");
+                artistInfo.append_attribute("class") = "top-artist-info";
+                std::string infoText = std::to_string(topArtistPlays) + " plays";
+                artistInfo.text().set(infoText.c_str());
+
+                // Album art
+                auto it = artMap.find(topArtistCrc);
+                if (it != artMap.end())
+                {
+                    auto img = topArtistDiv.append_child("img");
+                    img.append_attribute("class") = "top-artist-art";
+                    img.append_attribute("src") = it->second.c_str();
+                    img.append_attribute("alt") = topArtist.c_str();
+                }
+                else
+                {
+                    auto placeholder = topArtistDiv.append_child("div");
+                    placeholder.append_attribute("class") = "top-artist-art";
+                    placeholder.append_attribute("style") = "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);";
+                }
             }
 
             // Artist Ranking (Top 5)
@@ -661,6 +850,11 @@ h1 {
                         auto item = artistList.append_child("div");
                         item.append_attribute("class") = "artist-item";
 
+                        // Rank badge
+                        auto rankBadge = item.append_child("div");
+                        rankBadge.append_attribute("class") = "artist-rank";
+                        rankBadge.text().set(("#" + std::to_string(count)).c_str());
+
                         // Album art
                         auto it = artMap.find(info.topTrackCrc);
                         if (it != artMap.end())
@@ -714,6 +908,11 @@ h1 {
 
                     auto item = tracksDiv.append_child("div");
                     item.append_attribute("class") = "track-item";
+
+                    // Rank badge
+                    auto rankBadge = item.append_child("div");
+                    rankBadge.append_attribute("class") = "track-rank";
+                    rankBadge.text().set(("#" + std::to_string(rank)).c_str());
 
                     // Album art
                     auto it = artMap.find(e.track_crc);
