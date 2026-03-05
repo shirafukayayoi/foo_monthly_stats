@@ -4,25 +4,26 @@
 
 A foobar2000 component that tracks and visualizes your music listening statistics on a monthly and yearly basis.
 
-<!-- TODO: Add actual screenshot here. Replace the placeholder URL below with a real image -->
-<!--
-Example: ![Monthly Stats Example](docs/screenshot-monthly.png)
-For now, using placeholder:
--->
-
 ![Monthly Stats Example](./image/sample.png)
-![Monthly Stats Example](./image/README/1771945626430.png)
+
+![1772687992085](image/1772687992085.png)
+
+![Monthly Stats Example](./image/image.png)
 
 ## Features
 
 - 📊 **Monthly & Yearly Statistics**: View your listening history organized by month or year
+- 📅 **Daily Statistics**: Track listening statistics by day alongside monthly and yearly views
 - 🎵 **Track Play Counts**: Records the number of times each track is played with accurate playback time tracking
 - 📈 **Month-over-Month Comparison**: See how your listening habits change with delta indicators
 - 🎨 **Beautiful HTML Reports**: Export visually appealing reports with album artwork
+- 📱 **Smartphone HTML Reports**: Export format optimized for mobile devices and social media (Instagram Stories 1080x1980px with rank numbering)
+- 🎯 **Rank Numbering**: Visual rank badges (#1, #2, #3) for top artists and tracks in smartphone format
 - 🏆 **Top Artists Ranking**: Highlights your most-played artists with circular album art
 - ⏱️ **Total Listening Time**: Calculates and displays your total listening time
 - 🗄️ **SQLite Database**: Efficient local storage of listening history
 - 🖼️ **Album Art Integration**: Displays album artwork in reports using embedded thumbnails
+- ❌ **Selective Entry Removal**: Remove specific tracks from monthly statistics while preserving original playback history
 
 ## Installation
 
@@ -58,10 +59,13 @@ Local build requirements:
 
 ### Navigating Statistics
 
-- **◀ / ▶ buttons**: Navigate to previous/next month or year
-- **Month/Year toggle**: Switch between monthly and yearly aggregation views
-- **Refresh button**: Reload statistics from the database
+- **◀ / ▶ buttons**: Navigate to previous/next month, year, or day (depending on selected view)
+- **Day/Month/Year toggle**: Cycle through Daily → Monthly → Yearly views
+- **Day navigation**: Switch to Day view mode and navigate between days using Previous/Next arrows
+- **Reset button**: Reload statistics from the database
 - **Export button**: Generate HTML report with your statistics
+- **Export format**: Use "Export: format" button to toggle between Desktop and Smartphone (mobile-optimized) formats
+- **Remove Selected**: Select tracks to delete and click "Remove Selected" to remove from current period (original history preserved in database)
 
 ### Viewing Reports
 
@@ -138,13 +142,17 @@ foobar2000用の月次・年次再生統計コンポーネントです。
 ## 主な機能
 
 - 📊 **月次・年次統計**: 月別または年別に再生履歴を表示
+- 📅 **日次統計**: 月次・年次表示に加えて日別リスニング統計を追跡
 - 🎵 **トラック再生回数記録**: 正確な再生時間トラッキングで各曲の再生回数を記録
 - 📈 **前月比較**: 前月/前年との比較をデルタ表示で確認
 - 🎨 **美しいHTMLレポート**: アルバムアートワーク付きの見やすいレポートをエクスポート
+- 📱 **スマートフォン向けHTMLレポート**: モバイルデバイスとソーシャルメディア向けに最適化（Instagram Stories 1080x1980px、ランク番号表示付き）
+- 🎯 **ランク番号表示**: スマートフォン形式でトップアーティストとトラックに視覚的なランクバッジ（#1、#2、#3）を表示
 - 🏆 **トップアーティストランキング**: 最も再生したアーティストを丸いアルバムアートで表示
 - ⏱️ **総再生時間**: 累計リスニング時間を計算・表示
 - 🗄️ **SQLiteデータベース**: 効率的なローカルストレージ
 - 🖼️ **アルバムアート統合**: レポートにアルバムアートワークをサムネイル埋め込み
+- ❌ **個別エントリー削除**: 月次統計から特定のトラックを削除（元の再生履歴はデータベースに保持）
 
 ## インストール方法
 
@@ -175,10 +183,13 @@ foobar2000用の月次・年次再生統計コンポーネントです。
 
 ### 統計を操作する
 
-- **◀ / ▶ ボタン**: 前月/次月（または前年/次年）に移動
-- **Month/Yearボタン**: 月次表示と年次表示を切り替え
-- **Refreshボタン**: データベースから統計を再読み込み
+- **◀ / ▶ ボタン**: 前月/次月、前年/次年、または前日/次日に移動（選択されたビューに応じて変動）
+- **Day/Month/Yearボタン**: 日次表示 → 月次表示 → 年次表示を循環
+- **日次ナビゲーション**: Day ビューモードに切り替え、前日/次日矢印で日付をナビゲート
+- **Resetボタン**: データベースから統計を再読み込み
 - **Exportボタン**: HTMLレポートを生成
+- **Export形式**: "Export: format" ボタンで Desktop/Smartphone（モバイル最適化）形式を切り替え
+- **選択項目を除去**: 削除したいトラックを選択して「選択項目を除去」をクリック（元の履歴はデータベースに保持）
 
 ### レポートを表示する
 
