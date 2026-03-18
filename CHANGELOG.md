@@ -1,5 +1,39 @@
 # Release Notes
 
+## v1.6.1 - 2026-03-18
+
+### 🐛 Bug Fixes
+
+- **Fixed critical data loss bug on startup**: Resolved an issue where local music files would permanently disappear from the database when restarting foobar2000
+  - Fixed the `removeDuplicates` routine which was incorrectly deleting all valid tracks (entries with title/artist/album metadata) instead of only targeting actual duplicates
+  - Fixed a silent failure during database re-insertion caused by a column name typo (`canonical_crc` instead of `track_crc`), which previously resulted in permanent data loss for deleted entries
+  - Note: `foo_youtube` tracks remained unaffected by this bug as they typically lack complete album metadata and were excluded from the flawed duplication check
+
+### 📝 Technical Notes
+
+- Modified `DbManager::removeDuplicates()` in `db_manager.cpp`:
+  - Added `HAVING COUNT(DISTINCT track_crc) > 1` clause to strictly isolate duplicate rows for consolidation
+  - Fixed SQL column aliases (`track_crc`, `playcount`, `total_time_seconds`) to perfectly match the `monthly_count` table schema syntax during row re-insertion
+
+---
+
+## v1.6.1 - 2026-03-18（日本語）
+
+### 🐛 バグ修正
+
+- **起動時の深刻なデータ消失バグを修正**: foobar2000を再起動すると、ローカルの音楽ファイルがデータベースから永久に消えてしまう問題を解決しました
+  - `removeDuplicates` （重複排除処理）が、真の重複データではなく、メタデータ（タイトル/アーティスト/アルバム）が揃っている全ての正常なトラックを誤って削除対象としていたロジックの欠陥を修正しました
+  - データベースへの再挿入中に発生していた、カラム名のタイポ（`track_crc` ではなく `canonical_crc`）による静かなエラー（無視され結果的にデータが消失する問題）を修正しました
+  - 注: `foo_youtube` のトラックは通常アルバム等のメタデータが欠けており、この削除チェックから除外されていたため影響を受けませんでした
+
+### 📝 技術ノート
+
+- `db_manager.cpp` の `DbManager::removeDuplicates()` を修正:
+  - `HAVING COUNT(DISTINCT track_crc) > 1` 句を追加し、真の重複行のみを正確に分離・統合するよう最適化
+  - SQLのカラムエイリアス（`track_crc`, `playcount`, `total_time_seconds`）を修正し、行の再挿入時に `monthly_count` テーブルのスキーマ構文と完全に一致させるように変更
+
+---
+
 ## v1.6.0 - 2026-03-05
 
 ### ✨ New Features

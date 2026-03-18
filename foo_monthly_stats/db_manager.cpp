@@ -429,15 +429,16 @@ namespace fms
         const char *consolidateSql =
             "INSERT INTO monthly_count_temp "
             "SELECT ymd, "
-            "       MIN(track_crc) AS canonical_crc,"
+            "       MIN(track_crc) AS track_crc,"
             "       MAX(path) AS path,"
             "       title, artist, album,"
             "       MAX(length_seconds) AS length_seconds,"
-            "       SUM(playcount) AS total_playcount,"
-            "       SUM(total_time_seconds) AS total_time"
+            "       SUM(playcount) AS playcount,"
+            "       SUM(total_time_seconds) AS total_time_seconds"
             " FROM monthly_count"
             " WHERE title != '' AND artist != '' AND album != ''"
-            " GROUP BY ymd, title, artist, album";
+            " GROUP BY ymd, title, artist, album"
+            " HAVING COUNT(DISTINCT track_crc) > 1";
 
         if (sqlite3_exec(m_db, consolidateSql, nullptr, nullptr, nullptr) != SQLITE_OK)
         {
@@ -474,8 +475,8 @@ namespace fms
             // Step 3: Insert consolidated entries
             sqlite3_exec(m_db,
                          "INSERT INTO monthly_count "
-                         " SELECT ymd, canonical_crc, path, title, artist, album, "
-                         "        length_seconds, total_playcount, total_time"
+                         " SELECT ymd, track_crc, path, title, artist, album, "
+                         "        length_seconds, playcount, total_time_seconds"
                          " FROM monthly_count_temp;",
                          nullptr, nullptr, nullptr);
 
