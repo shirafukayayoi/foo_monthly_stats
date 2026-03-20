@@ -115,6 +115,7 @@ This project includes code and libraries under various licenses:
 - **pugixml**: MIT License
 - **WTL**: Microsoft Public License
 - **Catch2** (tests): Boost Software License 1.0
+- **Third-party notices**: See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
 
 The plugin code itself is released under the MIT License.
 
